@@ -1,3 +1,5 @@
 target
 docs/book
 .env
+kwaak.toml
+Dockerfile
