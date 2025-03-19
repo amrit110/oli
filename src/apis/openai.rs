@@ -51,6 +51,9 @@ struct OpenAIMessage {
     tool_calls: Option<Vec<OpenAIToolCall>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tool_call_id: Option<String>,
+    // New field to ensure responses for each tool call
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response_expected: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -164,6 +167,7 @@ impl OpenAIClient {
                                         ),
                                         tool_calls: Some(openai_tool_calls),
                                         tool_call_id: None,
+                                        response_expected: Some(true), // Expect a response if there are tools
                                     };
                                 }
                             }
@@ -177,6 +181,7 @@ impl OpenAIClient {
                     content: Some(msg.content),
                     tool_calls: None,
                     tool_call_id: None,
+                    response_expected: None,
                 }
             })
             .collect()
@@ -277,7 +282,6 @@ impl ApiClient for OpenAIClient {
 
         // Add assistant message with tool calls first, then add tool results
         // For OpenAI, we need to include the assistant's message with tool calls before the tool results
-        // Find the last assistant message with tool_calls and make sure it exists
         let mut last_assistant_msg_with_tools = false;
         let mut found_tool_ids = Vec::new(); // Track found tool IDs
 
@@ -307,6 +311,7 @@ impl ApiClient for OpenAIClient {
                             content: Some(result.output),
                             tool_calls: None,
                             tool_call_id: Some(result.tool_call_id),
+                            response_expected: None,
                         });
                     } else {
                         // Log that we're skipping a tool result with an unknown ID
