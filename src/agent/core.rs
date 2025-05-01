@@ -194,11 +194,6 @@ impl Agent {
         // Add the original user query
         executor.add_user_message(query.to_string());
 
-        // Let the executor determine if codebase parsing is needed
-        // It will use the updated might_need_codebase_parsing method that relies on the LLM
-        // This happens within executor.execute() and adds a suggestion to use ParseCode tool
-        // when appropriate, rather than automatically parsing everything
-
         // Execute and get result
         let result = executor.execute().await?;
 

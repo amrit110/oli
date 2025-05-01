@@ -1,0 +1,851 @@
+{
+  "queries": [
+    {
+      "query": "What does the ./README.md file contain?",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/README.md",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "Show me the contents of src/main.rs",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/src/main.rs",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "Could you check if the LICENSE file mentions copyright?",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/LICENSE",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "Can you explain what this code does in lib.rs?",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/src/lib.rs",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "What dependencies are listed in Cargo.toml?",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/Cargo.toml",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "How many Rust files are in the project?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all JavaScript files in the project",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.js",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "I need all TypeScript interface files",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.d.ts",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Show me all markdown files in the docs directory",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "*.md",
+        "path": "{TEST_DIR}/docs"
+      }
+    },
+    {
+      "query": "List all test files in the project",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*test*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find code that imports the module",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "use.*module",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Search for function definitions related to file operations",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "fn.*file",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Where is the execute method defined?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "fn\\s+execute",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find any code that processes JSON responses",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "json.*response",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Search for error handling code in the project",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "Error|error|Err|Result",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What files and directories are in the project root?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Show me the contents of the src directory",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/src"
+      }
+    },
+    {
+      "query": "What's in the app/src directory?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/app/src"
+      }
+    },
+    {
+      "query": "List the files in the tests directory",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/tests"
+      }
+    },
+    {
+      "query": "What files are in the tools directory?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/src/tools"
+      }
+    },
+    {
+      "query": "Create a small example program that prints Hello World to test.py",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/test.py",
+        "content": "print('Hello World')"
+      }
+    },
+    {
+      "query": "Make a simple HTML file with a heading that says Welcome",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/welcome.html",
+        "content": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Welcome</title>\n</head>\n<body>\n  <h1>Welcome</h1>\n</body>\n</html>"
+      }
+    },
+    {
+      "query": "Set up a basic configuration file called config.json with an empty JSON object",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/config.json",
+        "content": "{}"
+      }
+    },
+    {
+      "query": "I need a CSS file that sets the body background to light gray",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/style.css",
+        "content": "body {\n  background-color: lightgray;\n}"
+      }
+    },
+    {
+      "query": "Create a markdown file that explains how to run the tests",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/TESTING.md",
+        "content": "# Testing Guide\n\nTo run the tests for this project, use the following command:\n\n```\ncargo test\n```"
+      }
+    },
+    {
+      "query": "Run cargo fmt on all Rust files",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo fmt"
+      }
+    },
+    {
+      "query": "Check the current git status of the project",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && git status"
+      }
+    },
+    {
+      "query": "Count the number of lines of code in Rust files",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "find {TEST_DIR} -name '*.rs' | xargs wc -l"
+      }
+    },
+    {
+      "query": "List all environment variables",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "env"
+      }
+    },
+    {
+      "query": "Create a directory called 'examples'",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "mkdir -p {TEST_DIR}/examples"
+      }
+    },
+    {
+      "query": "In test.txt, change the word 'bug' to 'issue'",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/test.txt",
+        "old_string": "bug",
+        "new_string": "issue"
+      }
+    },
+    {
+      "query": "Replace the version number in package.json from 1.0.0 to 1.1.0",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/package.json",
+        "old_string": "\"version\": \"1.0.0\"",
+        "new_string": "\"version\": \"1.1.0\""
+      }
+    },
+    {
+      "query": "Update the copyright year in LICENSE to 2023",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/LICENSE",
+        "old_string": "Copyright (c) 2022",
+        "new_string": "Copyright (c) 2023"
+      }
+    },
+    {
+      "query": "Change debug to true in the configuration file",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/config.json",
+        "old_string": "\"debug\": false",
+        "new_string": "\"debug\": true"
+      }
+    },
+    {
+      "query": "Update the email address in CONTRIBUTING.md to support@example.com",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/CONTRIBUTING.md",
+        "old_string": "contact@example.com",
+        "new_string": "support@example.com"
+      }
+    },
+    {
+      "query": "Does README.md mention installation instructions?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "install|Installation|setup|Setup",
+        "path": "{TEST_DIR}",
+        "include": "README.md"
+      }
+    },
+    {
+      "query": "Find all TODO comments in the code",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "TODO|FIXME",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What files contain API endpoints?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "endpoint|route|api|API",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Are there any hardcoded credentials in the codebase?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "password|token|secret|key|credential",
+        "include": "*.{rs,ts,js}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Locate where the database connection is configured",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "database|connection|db\\.|DB_|connect",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What components use useState hook?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "useState",
+        "include": "*.tsx",
+        "path": "{TEST_DIR}/app/src/components"
+      }
+    },
+    {
+      "query": "Find all instances where error logging occurs",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "log.*error|error.*log|console\\.error",
+        "include": "*.{rs,ts,js}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What modules use async functions?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "async\\s+fn",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "List all dependencies in Cargo.toml",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "\\[dependencies\\]([\\s\\S]*?)\\[|\\[dependencies\\]([\\s\\S]*)",
+        "include": "Cargo.toml",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Where is the test suite configuration?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "*test*config*",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What documentation files do we have?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{md,txt,adoc,rst}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all GraphQL schema files",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{graphql,gql}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "List all configuration files in the project",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{json,yaml,yml,toml,ini,config}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Locate all CSS and SCSS files",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{css,scss,sass}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What's the structure of the test directory?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/tests"
+      }
+    },
+    {
+      "query": "What files are in the project root directory?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What components are in the UI directory?",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/app/src/components"
+      }
+    },
+    {
+      "query": "Show me what files are in the config directory",
+      "expected_tool": "LS",
+      "expected_params": {
+        "path": "{TEST_DIR}/config"
+      }
+    },
+    {
+      "query": "What utility modules do we have in the project?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*util*",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Create a simple Makefile that builds the project",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/Makefile",
+        "content": ".PHONY: build test clean\n\nbuild:\n\tcargo build --release\n\ntest:\n\tcargo test\n\nclean:\n\tcargo clean\n"
+      }
+    },
+    {
+      "query": "Set up a .env file with some environment variables",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/.env",
+        "content": "DATABASE_URL=postgres://user:password@localhost:5432/app\nAPI_KEY=your_api_key_here\nDEBUG=true\n"
+      }
+    },
+    {
+      "query": "Create a shell script to run the application",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/run.sh",
+        "content": "#!/bin/bash\ncargo build && ./target/debug/app\n"
+      }
+    },
+    {
+      "query": "Add a simple README for a new feature",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/features/new_feature/README.md",
+        "content": "# New Feature\n\nThis feature provides additional functionality for the application.\n\n## Usage\n\nDescribe how to use the feature here.\n"
+      }
+    },
+    {
+      "query": "Initialize a basic package.json file",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/package.json",
+        "content": "{\n  \"name\": \"app\",\n  \"version\": \"1.0.0\",\n  \"description\": \"An application\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\",\n    \"start\": \"node index.js\"\n  },\n  \"author\": \"\",\n  \"license\": \"MIT\"\n}\n"
+      }
+    },
+    {
+      "query": "Build the project in release mode",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo build --release"
+      }
+    },
+    {
+      "query": "Run cargo test with verbose output",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo test -- --verbose"
+      }
+    },
+    {
+      "query": "Install the required npm dependencies",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && npm install"
+      }
+    },
+    {
+      "query": "Get the current Git branch",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && git branch --show-current"
+      }
+    },
+    {
+      "query": "Run clippy on the codebase",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo clippy"
+      }
+    },
+    {
+      "query": "Fix the typo in README.md changing 'instll' to 'install'",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/README.md",
+        "old_string": "instll",
+        "new_string": "install"
+      }
+    },
+    {
+      "query": "Update the database connection string in config.js",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/config.js",
+        "old_string": "mongodb://localhost:27017/app",
+        "new_string": "mongodb://localhost:27017/newapp"
+      }
+    },
+    {
+      "query": "Change the log level from INFO to DEBUG in the logger configuration",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/logger.conf",
+        "old_string": "level = INFO",
+        "new_string": "level = DEBUG"
+      }
+    },
+    {
+      "query": "Fix the commented section in main.rs to use the new API",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/src/main.rs",
+        "old_string": "// client.send_request(data)",
+        "new_string": "// client.send_api_request(data, options)"
+      }
+    },
+    {
+      "query": "Update the project description in package.json",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/package.json",
+        "old_string": "\"description\": \"An application\"",
+        "new_string": "\"description\": \"Modern application with enhanced features\""
+      }
+    },
+    {
+      "query": "What's the size of all JavaScript files combined?",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "find {TEST_DIR} -name '*.js' -type f -exec du -ch {} \\; | grep total$"
+      }
+    },
+    {
+      "query": "Count how many commits are in the Git repository",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && git rev-list --count HEAD"
+      }
+    },
+    {
+      "query": "Check if port A3000 is in use",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "lsof -i :3000 || echo 'Port 3000 is not in use'"
+      }
+    },
+    {
+      "query": "Display system information",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "uname -a"
+      }
+    },
+    {
+      "query": "Check if Docker is running",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "docker info"
+      }
+    },
+    {
+      "query": "Check for any imports of deprecated modules",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "import.*deprecated",
+        "include": "*.{js,ts,rs}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all async functions that don't handle errors",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "async\\s+fn[^{]*\\{(?![^}]*catch)",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Look for any commented out code blocks",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "//[\\s\\S]*?\\w+[\\s\\S]*?\\w+|/\\*[\\s\\S]*?\\*/",
+        "include": "*.{rs,js,ts}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Search for potential memory leaks in the code",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "leak|Leak|Rc::new|Arc::new|Box::leak",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all mock objects used in tests",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "mock|Mock|stub|Stub|fake|Fake",
+        "include": "*test*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Where are the CSS variables defined?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "--[a-zA-Z0-9-]+\\s*:",
+        "include": "*.css",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find files that import from AWS SDK",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "aws-sdk|AWS|aws",
+        "include": "*.{js,ts,rs}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Are there any recursive functions in the codebase?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "fn\\s+\\w+[\\s\\S]*?\\1\\s*\\(",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all React components that implement useEffect",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "useEffect",
+        "include": "*.{tsx,jsx}",
+        "path": "{TEST_DIR}/app/src/components"
+      }
+    },
+    {
+      "query": "Search for code that might cause race conditions",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "Mutex|RwLock|lock|atomic|AtomicBool|AtomicUsize",
+        "include": "*.rs",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all text files in the repository",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.txt",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What shell scripts do we have?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{sh,bash}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "I need to find all Docker-related files",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/Dockerfile*",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Find all database migration files",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/migrations/**/*.{sql,rs}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Are there any backup files in the project?",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/*.{bak,backup,swp,tmp}",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Create a simple Docker Compose file for development",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/docker-compose.yml",
+        "content": "version: '3'\nservices:\n  app:\n    build: .\n    ports:\n      - \"3000:3000\"\n    volumes:\n      - .:/app\n    environment:\n      - NODE_ENV=development\n  db:\n    image: postgres:latest\n    ports:\n      - \"5432:5432\"\n    environment:\n      - POSTGRES_USER=user\n      - POSTGRES_PASSWORD=password\n      - POSTGRES_DB=myapp\n"
+      }
+    },
+    {
+      "query": "Write a basic .gitignore file for a Rust project",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/.gitignore",
+        "content": "/target/\n**/*.rs.bk\nCargo.lock\n.env\n.idea/\n.vscode/\n*.swp\n*.swo\n"
+      }
+    },
+    {
+      "query": "Set up a simple GitHub Actions workflow for CI",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/.github/workflows/ci.yml",
+        "content": "name: CI\n\non:\n  push:\n    branches: [ main ]\n  pull_request:\n    branches: [ main ]\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@v2\n    - name: Build\n      run: cargo build --verbose\n    - name: Run tests\n      run: cargo test --verbose\n"
+      }
+    },
+    {
+      "query": "Create a simple TypeScript configuration file",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/tsconfig.json",
+        "content": "{\n  \"compilerOptions\": {\n    \"target\": \"es2020\",\n    \"module\": \"commonjs\",\n    \"strict\": true,\n    \"esModuleInterop\": true,\n    \"skipLibCheck\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"outDir\": \"./dist\"\n  },\n  \"include\": [\"src/**/*\"],\n  \"exclude\": [\"node_modules\", \"**/*.test.ts\"]\n}\n"
+      }
+    },
+    {
+      "query": "Create a configuration file for ESLint",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/.eslintrc.json",
+        "content": "{\n  \"env\": {\n    \"browser\": true,\n    \"es2021\": true,\n    \"node\": true\n  },\n  \"extends\": [\n    \"eslint:recommended\",\n    \"plugin:@typescript-eslint/recommended\"\n  ],\n  \"parser\": \"@typescript-eslint/parser\",\n  \"parserOptions\": {\n    \"ecmaVersion\": 12,\n    \"sourceType\": \"module\"\n  },\n  \"plugins\": [\n    \"@typescript-eslint\"\n  ],\n  \"rules\": {\n    \"indent\": [\"error\", 2],\n    \"linebreak-style\": [\"error\", \"unix\"],\n    \"quotes\": [\"error\", \"single\"],\n    \"semi\": [\"error\", \"always\"]\n  }\n}\n"
+      }
+    },
+    {
+      "query": "Does our codebase follow the Rust style guide?",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo clippy"
+      }
+    },
+    {
+      "query": "How many files are there in the project?",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "find {TEST_DIR} -type f | wc -l"
+      }
+    },
+    {
+      "query": "Check if the README.md file contains an example section",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "example|Example|usage|Usage",
+        "include": "README.md",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "What modules are exported from lib.rs?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "pub\\s+mod|pub\\(crate\\)\\s+mod",
+        "include": "lib.rs",
+        "path": "{TEST_DIR}/src"
+      }
+    },
+    {
+      "query": "Find all files with test fixtures",
+      "expected_tool": "Glob",
+      "expected_params": {
+        "pattern": "**/fixtures/**/*",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Display the project license information",
+      "expected_tool": "Read",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/LICENSE",
+        "offset": 0,
+        "limit": 2000
+      }
+    },
+    {
+      "query": "Clean the project build directory",
+      "expected_tool": "Bash",
+      "expected_params": {
+        "command": "cd {TEST_DIR} && cargo clean"
+      }
+    },
+    {
+      "query": "What's the version of the package in package.json?",
+      "expected_tool": "Grep",
+      "expected_params": {
+        "pattern": "\"version\":\\s*\"[^\"]+\"",
+        "include": "package.json",
+        "path": "{TEST_DIR}"
+      }
+    },
+    {
+      "query": "Create a basic React component file",
+      "expected_tool": "Write",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/app/src/components/Button.tsx",
+        "content": "import React from 'react';\n\ninterface ButtonProps {\n  text: string;\n  onClick: () => void;\n}\n\nconst Button: React.FC<ButtonProps> = ({ text, onClick }) => {\n  return (\n    <button onClick={onClick}>\n      {text}\n    </button>\n  );\n};\n\nexport default Button;\n"
+      }
+    },
+    {
+      "query": "Add proper error handling to main.rs",
+      "expected_tool": "Edit",
+      "expected_params": {
+        "file_path": "{TEST_DIR}/src/main.rs",
+        "old_string": "fn main() {\n    println!(\"Hello, world!\");\n}",
+        "new_string": "fn main() -> Result<(), Box<dyn std::error::Error>> {\n    println!(\"Hello, world!\");\n    Ok(())\n}"
+      }
+    }
+  ]
+}
