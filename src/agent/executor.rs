@@ -2,18 +2,17 @@ use crate::agent::tools::{get_tool_definitions, ToolCall as AgentToolCall};
 use crate::apis::api_client::{
     CompletionOptions, DynApiClient, Message, ToolCall as ApiToolCall, ToolDefinition, ToolResult,
 };
+use crate::prompts::add_working_directory_to_prompt;
 use anyhow::{Context, Result};
 use serde_json::{self, Value};
 use tokio::sync::mpsc;
-
-// We'll implement token usage tracking directly in the app without
-// a separate structure for now
 
 pub struct AgentExecutor {
     api_client: DynApiClient,
     conversation: Vec<Message>,
     tool_definitions: Vec<ToolDefinition>,
     progress_sender: Option<mpsc::Sender<String>>,
+    working_directory: Option<String>,
 }
 
 impl AgentExecutor {
@@ -32,10 +31,41 @@ impl AgentExecutor {
             conversation: Vec::new(),
             tool_definitions: tool_defs,
             progress_sender: None,
+            working_directory: None,
         }
     }
 
-    pub fn set_conversation_history(&mut self, history: Vec<Message>) {
+    pub fn set_working_directory(&mut self, working_dir: String) {
+        self.working_directory = Some(working_dir.clone());
+
+        // Update any existing system message with working directory information
+        let has_system = self.conversation.iter().any(|msg| msg.role == "system");
+        if has_system {
+            // Find and update the system message with working directory info
+            for msg in &mut self.conversation {
+                if msg.role == "system" {
+                    // Only add working directory if it's not already there
+                    if !msg.content.contains("## WORKING DIRECTORY") {
+                        // Add working directory section to end of system message
+                        msg.content = add_working_directory_to_prompt(&msg.content, &working_dir);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    pub fn set_conversation_history(&mut self, mut history: Vec<Message>) {
+        // If we have a working directory, ensure any system message includes it
+        if let Some(cwd) = &self.working_directory {
+            for msg in &mut history {
+                if msg.role == "system" && !msg.content.contains("## WORKING DIRECTORY") {
+                    // Add working directory section
+                    msg.content = add_working_directory_to_prompt(&msg.content, cwd);
+                }
+            }
+        }
+
         self.conversation = history;
     }
 
@@ -49,7 +79,29 @@ impl AgentExecutor {
     }
 
     pub fn add_system_message(&mut self, content: String) {
-        self.conversation.push(Message::system(content));
+        // If we have a working directory, ensure it's included in the system message
+        let system_content = if let Some(cwd) = &self.working_directory {
+            add_working_directory_to_prompt(&content, cwd)
+        } else {
+            content
+        };
+
+        // Remove any existing system message to avoid duplicates
+        self.conversation.retain(|msg| msg.role != "system");
+
+        // Add the new system message
+        self.conversation.push(Message::system(system_content));
+
+        // Make sure system message is at the beginning
+        self.conversation.sort_by(|a, b| {
+            if a.role == "system" {
+                std::cmp::Ordering::Less
+            } else if b.role == "system" {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        });
     }
 
     pub fn add_user_message(&mut self, content: String) {
@@ -57,6 +109,15 @@ impl AgentExecutor {
     }
 
     pub async fn execute(&mut self) -> Result<String> {
+        // Debug log working directory if available
+        if let Some(cwd) = &self.working_directory {
+            if let Some(sender) = &self.progress_sender {
+                let _ = sender
+                    .send(format!("[debug] Working directory: {}", cwd))
+                    .await;
+            }
+        }
+
         // Create options with tools enabled and optimized parameters
         let options = CompletionOptions {
             temperature: Some(0.25),
@@ -82,29 +143,80 @@ impl AgentExecutor {
         // Add the assistant's message with tool calls to the conversation
         add_assistant_message_to_conversation(&mut self.conversation, &content, &tool_calls);
 
-        // Process tool calls in a loop until no more tools are called
+        // Process tool calls in a loop until task is complete
         let mut current_content = content;
         let mut current_tool_calls = tool_calls;
         let mut loop_count = 0;
-        const MAX_LOOPS: usize = 10; // Safety limit for tool call loops
+        const MAX_LOOPS: usize = 100; // Limit for tool call loops
+        let mut task_completed = false;
 
         while let Some(ref calls) = current_tool_calls {
-            // Safety check to prevent infinite loops
+            // Safety check to prevent truly infinite loops
             loop_count += 1;
             if loop_count > MAX_LOOPS {
                 if let Some(sender) = &self.progress_sender {
                     let _ = sender
-                        .send("Reached maximum number of tool call loops. Stopping.".to_string())
+                        .send(
+                            "Reached maximum number of tool call loops (100). Forcing completion."
+                                .to_string(),
+                        )
                         .await;
                 }
+                // Force task completion on max loops
+                task_completed = true;
                 break;
+            }
+
+            // Log current iteration for debugging
+            if let Some(sender) = &self.progress_sender {
+                let _ = sender
+                    .send(format!("Tool iteration {}/{}", loop_count, MAX_LOOPS))
+                    .await;
             }
 
             // Execute all tool calls
             let tool_results = self.execute_tool_calls(calls, loop_count).await;
 
-            // Determine completion options based on loop count
-            let next_options = get_next_completion_options(loop_count, MAX_LOOPS, &options);
+            // Determine whether to request task completion on next iteration
+            // More likely to ask for completion as loop count increases
+            let completion_threshold = determine_completion_threshold(loop_count);
+
+            // Determine completion options based on context
+            let next_options = if should_request_completion(
+                loop_count,
+                MAX_LOOPS,
+                completion_threshold,
+            ) {
+                // Ask LLM to provide a final summary and determine if task is complete
+                CompletionOptions {
+                    require_tool_use: false,
+                    json_schema: Some(
+                        r#"{
+                            "type": "object",
+                            "properties": {
+                                "taskComplete": {
+                                    "type": "boolean",
+                                    "description": "Whether the task is fully complete and no more tool calls are needed"
+                                },
+                                "finalSummary": {
+                                    "type": "string",
+                                    "description": "Final comprehensive summary of findings and results"
+                                },
+                                "reasoning": {
+                                    "type": "string",
+                                    "description": "Explanation of why the task is or is not complete"
+                                }
+                            },
+                            "required": ["taskComplete", "finalSummary"]
+                        }"#
+                        .to_string(),
+                    ),
+                    ..options.clone()
+                }
+            } else {
+                // Standard options for continuing with tools
+                options.clone()
+            };
 
             // Request another completion with the tool results
             let (next_content, next_tool_calls) = self
@@ -112,14 +224,72 @@ impl AgentExecutor {
                 .complete_with_tools(self.conversation.clone(), next_options, Some(tool_results))
                 .await?;
 
-            // Extract JSON content if present (for finalSummary if available)
-            current_content = extract_content_from_response(&next_content);
+            // Check if LLM indicated task completion in structured response
+            let (processed_content, is_complete) = process_response(&next_content);
+            current_content = processed_content;
+
+            // Update task completion status
+            if is_complete {
+                task_completed = true;
+            }
+
+            // Update tool calls for next iteration
             current_tool_calls = next_tool_calls;
 
-            // If no more tool calls, break the loop
-            if current_tool_calls.is_none() {
+            // Break if task is complete or if no more tool calls
+            if task_completed || current_tool_calls.is_none() {
                 break;
             }
+
+            // If approaching max loops, force a check for completion next iteration
+            if loop_count >= MAX_LOOPS - 10 && loop_count % 5 == 0 {
+                if let Some(sender) = &self.progress_sender {
+                    let _ = sender
+                        .send(
+                            "Approaching maximum iterations, requesting task completion check."
+                                .to_string(),
+                        )
+                        .await;
+                }
+            }
+        }
+
+        // If we reached the end of the loop without explicit completion
+        // but no more tool calls, try to get a proper summary
+        if !task_completed && current_tool_calls.is_none() && loop_count < MAX_LOOPS - 1 {
+            // One final call to get a proper summary
+            if let Some(sender) = &self.progress_sender {
+                let _ = sender
+                    .send("Task appears complete, requesting final summary.".to_string())
+                    .await;
+            }
+
+            let final_options = CompletionOptions {
+                require_tool_use: false,
+                json_schema: Some(
+                    r#"{
+                        "type": "object",
+                        "properties": {
+                            "finalSummary": {
+                                "type": "string",
+                                "description": "Final comprehensive summary of findings and results"
+                            }
+                        },
+                        "required": ["finalSummary"]
+                    }"#
+                    .to_string(),
+                ),
+                ..options.clone()
+            };
+
+            // Request final summary
+            let (final_content, _) = self
+                .api_client
+                .complete_with_tools(self.conversation.clone(), final_options, None)
+                .await?;
+
+            let (processed_content, _) = process_response(&final_content);
+            current_content = processed_content;
         }
 
         // Add final response to conversation
@@ -231,47 +401,56 @@ fn add_assistant_message_to_conversation(
     }
 }
 
-fn get_next_completion_options(
-    loop_count: usize,
-    max_loops: usize,
-    base_options: &CompletionOptions,
-) -> CompletionOptions {
-    if loop_count >= max_loops - 1 {
-        // On the last loop, request a final summary with no further tool calls
-        CompletionOptions {
-            require_tool_use: false,
-            json_schema: Some(
-                r#"{
-                    "type": "object",
-                    "properties": {
-                        "finalSummary": {
-                            "type": "string",
-                            "description": "Final comprehensive summary of findings and results"
-                        }
-                    },
-                    "required": ["finalSummary"]
-                }"#
-                .to_string(),
-            ),
-            ..base_options.clone()
-        }
-    } else {
-        // For intermediate calls, continue with normal options
-        base_options.clone()
+/// Calculate a dynamic completion threshold based on loop count
+/// As loop count increases, we become more likely to ask if the task is complete
+pub fn determine_completion_threshold(loop_count: usize) -> usize {
+    // Initial check after a few iterations, then gradually increase frequency
+    match loop_count {
+        0..=2 => 1000, // Don't check in first couple iterations
+        3..=6 => 10,   // 10% chance between iterations 3-6
+        7..=15 => 5,   // 20% chance between iterations 7-15
+        16..=25 => 3,  // 33% chance between iterations 16-25
+        26..=40 => 2,  // 50% chance between iterations 26-40
+        _ => 1,        // Always check after iteration 40
     }
 }
 
-fn extract_content_from_response(content: &str) -> String {
+/// Determine if we should ask the LLM to check if the task is complete
+pub fn should_request_completion(loop_count: usize, max_loops: usize, threshold: usize) -> bool {
+    // Always check completion when approaching max loops
+    if loop_count >= max_loops - 5 {
+        return true;
+    }
+
+    // Periodically check based on threshold
+    if threshold == 1 || loop_count % threshold == 0 {
+        return true;
+    }
+
+    // Also check after specific checkpoints
+    matches!(loop_count, 5 | 10 | 15 | 20 | 30 | 50 | 75)
+}
+
+/// Process the LLM response, extracting content and checking if task is complete
+/// Returns (processed_content, is_complete)
+pub fn process_response(content: &str) -> (String, bool) {
     if content.trim().starts_with('{') && content.trim().ends_with('}') {
-        // Try to parse as JSON to extract the finalSummary if available
+        // Try to parse as JSON
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(content) {
+            // Check for task completion flag
+            let is_complete = json
+                .get("taskComplete")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+
+            // Extract finalSummary if available
             if let Some(summary) = json.get("finalSummary").and_then(|s| s.as_str()) {
-                return summary.to_string();
+                return (summary.to_string(), is_complete);
             }
         }
     }
 
-    content.to_string()
+    (content.to_string(), false)
 }
 
 async fn send_error_message(sender: &Option<mpsc::Sender<String>>, message: &str) {

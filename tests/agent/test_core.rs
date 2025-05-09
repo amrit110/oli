@@ -273,3 +273,34 @@ fn test_method_chaining() {
         .with_model("gpt-4".to_string())
         .with_system_prompt("Another prompt".to_string());
 }
+
+/// Tests setting a working directory
+#[test]
+fn test_agent_with_working_directory() {
+    let working_dir = "/path/to/working/directory";
+    let _agent = Agent::new(LLMProvider::Anthropic).with_working_directory(working_dir.to_string());
+
+    // Just test that the method exists and doesn't panic
+}
+
+/// Test that working directory is correctly added to system prompt
+#[test]
+fn test_working_directory_in_system_prompt() {
+    let mut agent = Agent::new(LLMProvider::Anthropic);
+    let working_dir = "/path/to/working/directory";
+
+    // First add a system message without CWD info
+    agent.add_message(Message::system("You are a helpful assistant.".to_string()));
+
+    // Now set the working directory
+    agent = agent.with_working_directory(working_dir.to_string());
+
+    // Extract conversation history to verify
+    let history = agent.get_conversation_history_for_test();
+
+    // Verify system message exists
+    assert!(history.iter().any(|msg| msg.role == "system"));
+
+    // Because we haven't called execute() yet, the CWD won't be added until then
+    // This test checks the setup only
+}

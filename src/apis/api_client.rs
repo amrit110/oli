@@ -192,6 +192,7 @@ pub enum ApiClientEnum {
     OpenAI(Arc<crate::apis::openai::OpenAIClient>),
     Ollama(Arc<crate::apis::ollama::OllamaClient>),
     Gemini(Arc<crate::apis::gemini::GeminiClient>),
+    CustomMock(Arc<dyn ApiClient>),
 }
 
 impl ApiClientEnum {
@@ -206,6 +207,7 @@ impl ApiClientEnum {
             Self::OpenAI(client) => client.complete(messages, options).await,
             Self::Ollama(client) => client.complete(messages, options).await,
             Self::Gemini(client) => client.complete(messages, options).await,
+            Self::CustomMock(client) => client.complete(messages, options).await,
         }
     }
 
@@ -236,7 +238,16 @@ impl ApiClientEnum {
                     .complete_with_tools(messages, options, tool_results)
                     .await
             }
+            Self::CustomMock(client) => {
+                client
+                    .complete_with_tools(messages, options, tool_results)
+                    .await
+            }
         }
+    }
+
+    pub fn custom_for_testing(client: Arc<dyn ApiClient>) -> Self {
+        Self::CustomMock(client)
     }
 }
 

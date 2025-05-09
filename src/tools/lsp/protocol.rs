@@ -16,9 +16,16 @@ pub enum RequestId {
     Number(u64),
 }
 
+impl Default for RequestId {
+    fn default() -> Self {
+        RequestId::Number(0)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ResponseMessage {
     pub jsonrpc: String,
+    #[serde(default)]
     pub id: RequestId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<Value>,

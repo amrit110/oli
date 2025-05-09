@@ -22,5 +22,6 @@ pub fn get_available_commands() -> Vec<SpecialCommand> {
         SpecialCommand::new("/help", "Show help and available commands"),
         SpecialCommand::new("/clear", "Clear conversation history"),
         SpecialCommand::new("/exit", "Exit the application"),
+        SpecialCommand::new("/memory", "Display and manage codebase memory"),
     ]
 }

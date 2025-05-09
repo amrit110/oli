@@ -2,6 +2,7 @@ use crate::agent::core::Agent;
 use crate::apis::api_client::{ApiClient, SessionManager};
 use crate::app::history::ConversationSummary;
 use crate::app::logger::{format_log_with_color, LogLevel};
+use crate::app::memory::MemoryManager;
 use crate::models;
 use crate::models::{ModelConfig, ANTHROPIC_MODEL_NAME, GEMINI_MODEL_NAME, OPENAI_MODEL_NAME};
 use anyhow::Result;
@@ -222,6 +223,8 @@ pub struct App {
     pub conversation_summaries: Vec<ConversationSummary>,
     pub session_manager: Option<SessionManager>,
     pub session_id: String,
+    // Memory manager for the oli.md memory file
+    pub memory_manager: MemoryManager,
     // Add tracking for tool executions
     pub tool_executions: HashMap<String, ToolExecution>,
 }
@@ -249,6 +252,16 @@ impl App {
         // Generate a unique session ID
         let session_id = Uuid::new_v4().to_string();
 
+        // Initialize memory manager with oli.md in the current directory
+        let memory_manager = MemoryManager::new();
+
+        // Create the memory file if it doesn't exist
+        if !memory_manager.memory_exists() {
+            if let Err(e) = memory_manager.write_memory(&MemoryManager::default_memory_template()) {
+                eprintln!("Failed to create memory file: {}", e);
+            }
+        }
+
         Self {
             state: AppState::Setup,
             messages: vec![],
@@ -266,6 +279,7 @@ impl App {
             conversation_summaries: Vec::new(),
             session_manager,
             session_id,
+            memory_manager,
             tool_executions: HashMap::new(),
         }
     }
@@ -875,6 +889,11 @@ impl App {
             // Create and configure the agent
             let mut agent = crate::agent::core::Agent::new(provider);
             agent = agent.with_model(agent_model);
+
+            // Pass current working directory to the agent
+            if let Some(cwd) = &self.current_working_dir {
+                agent = agent.with_working_directory(cwd.clone());
+            }
 
             // Set up agent progress handling
             let (progress_tx_sender, mut progress_rx_receiver) =

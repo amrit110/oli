@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum LspServerType {
     Python,
     Rust,
@@ -50,13 +50,32 @@ pub struct Location {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DocumentSymbolResponse {
+    HierarchicalSymbols(Vec<DocumentSymbol>),
+    FlatSymbols(Vec<SymbolInformation>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentSymbol {
     pub name: String,
     pub detail: Option<String>,
-    pub kind: SymbolKind,
+    #[serde(rename = "kind")]
+    pub kind: u32,
     pub range: Range,
+    #[serde(rename = "selectionRange")]
     pub selection_range: Range,
     pub children: Option<Vec<DocumentSymbol>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolInformation {
+    pub name: String,
+    #[serde(rename = "kind")]
+    pub kind: u32,
+    pub location: Location,
+    #[serde(rename = "containerName")]
+    pub container_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -118,6 +137,41 @@ impl SymbolKind {
             SymbolKind::Event => Some("Event".to_string()),
             SymbolKind::Operator => Some("Operator".to_string()),
             SymbolKind::TypeParameter => Some("TypeParameter".to_string()),
+        }
+    }
+}
+
+impl DocumentSymbol {
+    // Get a human-readable representation of the symbol kind
+    pub fn kind_to_string(&self) -> String {
+        match self.kind {
+            1 => "File".to_string(),
+            2 => "Module".to_string(),
+            3 => "Namespace".to_string(),
+            4 => "Package".to_string(),
+            5 => "Class".to_string(),
+            6 => "Method".to_string(),
+            7 => "Property".to_string(),
+            8 => "Field".to_string(),
+            9 => "Constructor".to_string(),
+            10 => "Enum".to_string(),
+            11 => "Interface".to_string(),
+            12 => "Function".to_string(),
+            13 => "Variable".to_string(),
+            14 => "Constant".to_string(),
+            15 => "String".to_string(),
+            16 => "Number".to_string(),
+            17 => "Boolean".to_string(),
+            18 => "Array".to_string(),
+            19 => "Object".to_string(),
+            20 => "Key".to_string(),
+            21 => "Null".to_string(),
+            22 => "EnumMember".to_string(),
+            23 => "Struct".to_string(),
+            24 => "Event".to_string(),
+            25 => "Operator".to_string(),
+            26 => "TypeParameter".to_string(),
+            _ => format!("Unknown ({})", self.kind),
         }
     }
 }

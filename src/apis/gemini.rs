@@ -669,3 +669,408 @@ impl ApiClient for GeminiClient {
         Ok((content, tool_calls))
     }
 }
+
+#[cfg(test)]
+// Unit tests within the same module to test private implementation details
+mod tests {
+    use super::*;
+    use crate::apis::api_client::{Message, ToolDefinition, ToolResult};
+    use serde_json::json;
+
+    #[test]
+    fn test_gemini_model_name() {
+        // Test that the default model name is correct when providing None
+        // This doesn't make API calls, just tests the client setup logic
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None);
+
+        // Just validate the client creation logic worked
+        assert!(
+            client.is_ok(),
+            "Failed to create Gemini client with default model"
+        );
+    }
+
+    #[test]
+    fn test_gemini_with_custom_model() {
+        // Test that the custom model name is used correctly
+        let api_key = "test_api_key".to_string();
+        let model_name = "gemini-2.5-pro-exp-03-25".to_string();
+        let client = GeminiClient::with_api_key(api_key, Some(model_name));
+
+        assert!(
+            client.is_ok(),
+            "Failed to create Gemini client with custom model"
+        );
+    }
+
+    #[test]
+    fn test_gemini_default_model_name() {
+        // Test that the default model name from constants is used
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Since model is private, we can verify it uses the default by checking that
+        // the api_base contains the default model name
+        assert!(
+            client.api_base.contains(GEMINI_MODEL_NAME),
+            "Base URL should contain the default model name: {}",
+            GEMINI_MODEL_NAME
+        );
+    }
+
+    #[test]
+    fn test_convert_messages() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Test converting different message types
+        let messages = vec![
+            Message {
+                role: "system".to_string(),
+                content: "You are a helpful assistant".to_string(),
+            },
+            Message {
+                role: "user".to_string(),
+                content: "Hello".to_string(),
+            },
+            Message {
+                role: "assistant".to_string(),
+                content: "Hi there".to_string(),
+            },
+        ];
+
+        let gemini_messages = client.convert_messages(messages);
+
+        // The implementation of convert_messages combines consecutive messages with the same role
+        // System and user roles are both mapped to "user" in Gemini, so they might be combined
+
+        // Let's first check that all our content is present
+        let mut found_system = false;
+        let mut found_user = false;
+        let mut found_assistant = false;
+
+        for msg in &gemini_messages {
+            for part in &msg.parts {
+                if let GeminiContent::Text { text } = part {
+                    if text == "You are a helpful assistant" {
+                        found_system = true;
+                        assert_eq!(
+                            msg.role, "user",
+                            "System message should be converted to user role"
+                        );
+                    } else if text == "Hello" {
+                        found_user = true;
+                        assert_eq!(msg.role, "user", "User message should have user role");
+                    } else if text == "Hi there" {
+                        found_assistant = true;
+                        assert_eq!(
+                            msg.role, "model",
+                            "Assistant message should be converted to model role"
+                        );
+                    }
+                }
+            }
+        }
+
+        assert!(found_system, "System message content not found");
+        assert!(found_user, "User message content not found");
+        assert!(found_assistant, "Assistant message content not found");
+
+        // Verify that we have the correct number of role changes
+        // There should be at least 2 messages (user and model roles)
+        assert!(
+            gemini_messages.len() >= 2,
+            "Should have at least 2 messages after role consolidation"
+        );
+
+        // Last message should be the assistant/model role
+        assert_eq!(
+            gemini_messages.last().unwrap().role,
+            "model",
+            "Last message should have model role"
+        );
+    }
+
+    #[test]
+    fn test_convert_tool_definitions() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create test tool definitions
+        let tools = vec![
+            ToolDefinition {
+                name: "calculator".to_string(),
+                description: "A simple calculator".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "expression": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["expression"]
+                }),
+            },
+            ToolDefinition {
+                name: "weather".to_string(),
+                description: "Gets weather information".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["location"]
+                }),
+            },
+        ];
+
+        let gemini_tools = client.convert_tool_definitions(tools);
+
+        // Verify the conversion
+        assert_eq!(gemini_tools.len(), 1, "Should have 1 tool wrapper");
+        assert_eq!(
+            gemini_tools[0].function_declarations.len(),
+            2,
+            "Should have 2 function declarations"
+        );
+
+        // Check first tool
+        let first_function = &gemini_tools[0].function_declarations[0];
+        assert_eq!(first_function.name, "calculator");
+        assert_eq!(
+            first_function.description,
+            Some("A simple calculator".to_string())
+        );
+
+        // Check second tool
+        let second_function = &gemini_tools[0].function_declarations[1];
+        assert_eq!(second_function.name, "weather");
+        assert_eq!(
+            second_function.description,
+            Some("Gets weather information".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_tool_calls() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create a mock response
+        let candidate = GeminiCandidate {
+            content: GeminiMessage {
+                role: "model".to_string(),
+                parts: vec![GeminiContent::FunctionCall {
+                    function_call: GeminiFunctionCall {
+                        name: "calculator".to_string(),
+                        args: json!({"expression": "2+2"}),
+                    },
+                }],
+            },
+            finish_reason: Some("STOP".to_string()),
+            safety_ratings: None,
+            index: None,
+        };
+
+        let response = GeminiResponse {
+            candidates: vec![candidate],
+            usage_metadata: None,
+        };
+
+        let tool_calls = client.extract_tool_calls(&response);
+
+        // Verify the extraction
+        assert!(tool_calls.is_some(), "Should extract tool calls");
+        let calls = tool_calls.unwrap();
+        assert_eq!(calls.len(), 1, "Should have 1 tool call");
+        assert_eq!(calls[0].name, "calculator");
+
+        // Check arguments
+        let args = &calls[0].arguments;
+        assert_eq!(args.get("expression").and_then(|v| v.as_str()), Some("2+2"));
+    }
+
+    #[test]
+    fn test_extract_tool_calls_from_other() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create a mock response with an "Other" variant
+        let candidate = GeminiCandidate {
+            content: GeminiMessage {
+                role: "model".to_string(),
+                parts: vec![GeminiContent::Other(json!({
+                    "functionCall": {
+                        "name": "calculator",
+                        "args": {
+                            "expression": "3*4"
+                        }
+                    }
+                }))],
+            },
+            finish_reason: Some("STOP".to_string()),
+            safety_ratings: None,
+            index: None,
+        };
+
+        let response = GeminiResponse {
+            candidates: vec![candidate],
+            usage_metadata: None,
+        };
+
+        let tool_calls = client.extract_tool_calls(&response);
+
+        // Verify the extraction from Other variant
+        assert!(
+            tool_calls.is_some(),
+            "Should extract tool calls from Other variant"
+        );
+        let calls = tool_calls.unwrap();
+        assert_eq!(calls.len(), 1, "Should have 1 tool call");
+        assert_eq!(calls[0].name, "calculator");
+
+        // Check arguments
+        let args = &calls[0].arguments;
+        assert_eq!(args.get("expression").and_then(|v| v.as_str()), Some("3*4"));
+    }
+
+    #[test]
+    fn test_add_tool_results() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create tool results
+        let tool_results = vec![ToolResult {
+            tool_call_id: "tool-123".to_string(),
+            output: "The answer is 4".to_string(),
+        }];
+
+        // Create an empty message list to add the results to
+        let mut messages = Vec::new();
+
+        // Add the tool results
+        client.add_tool_results(&mut messages, tool_results);
+
+        // Verify the messages
+        assert_eq!(messages.len(), 2, "Should have added 2 messages");
+
+        // First message should be a function call
+        assert_eq!(messages[0].role, "model");
+        match &messages[0].parts[0] {
+            GeminiContent::FunctionCall { function_call } => {
+                assert_eq!(function_call.name, "function");
+            }
+            _ => panic!("Expected FunctionCall content"),
+        }
+
+        // Second message should be a function response
+        assert_eq!(messages[1].role, "user");
+        match &messages[1].parts[0] {
+            GeminiContent::FunctionResponse { function_response } => {
+                assert_eq!(function_response.name, "function");
+                let response = &function_response.response;
+                assert_eq!(
+                    response.get("tool_call_id").and_then(|v| v.as_str()),
+                    Some("tool-123")
+                );
+                assert_eq!(
+                    response.get("content").and_then(|v| v.as_str()),
+                    Some("The answer is 4")
+                );
+            }
+            _ => panic!("Expected FunctionResponse content"),
+        }
+    }
+
+    #[test]
+    fn test_extract_text_content() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create a mock response with text content
+        let candidate = GeminiCandidate {
+            content: GeminiMessage {
+                role: "model".to_string(),
+                parts: vec![GeminiContent::Text {
+                    text: "Hello, how can I help you today?".to_string(),
+                }],
+            },
+            finish_reason: Some("STOP".to_string()),
+            safety_ratings: None,
+            index: None,
+        };
+
+        let response = GeminiResponse {
+            candidates: vec![candidate],
+            usage_metadata: None,
+        };
+
+        let text = client.extract_text_content(&response).unwrap();
+
+        // Verify the text extraction
+        assert_eq!(text, "Hello, how can I help you today?");
+    }
+
+    #[test]
+    fn test_extract_text_content_from_other() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create a mock response with text in an "Other" variant
+        let candidate = GeminiCandidate {
+            content: GeminiMessage {
+                role: "model".to_string(),
+                parts: vec![GeminiContent::Other(json!({
+                    "text": "This is text from the Other variant"
+                }))],
+            },
+            finish_reason: Some("STOP".to_string()),
+            safety_ratings: None,
+            index: None,
+        };
+
+        let response = GeminiResponse {
+            candidates: vec![candidate],
+            usage_metadata: None,
+        };
+
+        let text = client.extract_text_content(&response).unwrap();
+
+        // Verify the text extraction from Other variant
+        assert_eq!(text, "This is text from the Other variant");
+    }
+
+    #[test]
+    fn test_empty_response_candidates() {
+        // Create a client for testing
+        let api_key = "test_api_key".to_string();
+        let client = GeminiClient::with_api_key(api_key, None).unwrap();
+
+        // Create an empty response
+        let response = GeminiResponse {
+            candidates: vec![],
+            usage_metadata: None,
+        };
+
+        // Test extract_tool_calls with empty candidates
+        let tool_calls = client.extract_tool_calls(&response);
+        assert!(
+            tool_calls.is_none(),
+            "Should return None for empty candidates"
+        );
+
+        // Test extract_text_content with empty candidates
+        let result = client.extract_text_content(&response);
+        assert!(result.is_err(), "Should return error for empty candidates");
+    }
+}

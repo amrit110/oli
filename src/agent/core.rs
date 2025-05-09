@@ -4,7 +4,7 @@ use crate::apis::api_client::{ApiClientEnum, DynApiClient, Message};
 use crate::apis::gemini::GeminiClient;
 use crate::apis::ollama::OllamaClient;
 use crate::apis::openai::OpenAIClient;
-use crate::prompts::DEFAULT_AGENT_PROMPT;
+use crate::prompts::add_working_directory_to_prompt;
 use anyhow::{Context, Result};
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -23,6 +23,7 @@ pub struct Agent {
     model: Option<String>,
     api_client: Option<DynApiClient>,
     system_prompt: Option<String>,
+    working_directory: Option<String>,
     progress_sender: Option<mpsc::Sender<String>>,
     // Store the conversation history
     conversation_history: Vec<crate::apis::api_client::Message>,
@@ -35,6 +36,7 @@ impl Agent {
             model: None,
             api_client: None,
             system_prompt: None,
+            working_directory: None,
             progress_sender: None,
             conversation_history: Vec::new(),
         }
@@ -62,6 +64,11 @@ impl Agent {
 
     pub fn with_progress_sender(mut self, sender: mpsc::Sender<String>) -> Self {
         self.progress_sender = Some(sender);
+        self
+    }
+
+    pub fn with_working_directory(mut self, working_dir: String) -> Self {
+        self.working_directory = Some(working_dir);
         self
     }
 
@@ -143,6 +150,11 @@ impl Agent {
             executor.set_conversation_history(self.conversation_history.clone());
         }
 
+        // Set working directory in executor if available
+        if let Some(working_dir) = &self.working_directory {
+            executor.set_working_directory(working_dir.clone());
+        }
+
         // Log the conversation history we're passing to the executor only when debug is explicitly enabled
         let is_debug_mode = std::env::var("RUST_LOG")
             .map(|v| v.contains("debug"))
@@ -174,20 +186,46 @@ impl Agent {
             executor = executor.with_progress_sender(sender.clone());
         }
 
-        // Always preserve system message at the beginning - if it doesn't exist
+        // Check if a system message exists in the history
         let has_system_message = self
             .conversation_history
             .iter()
             .any(|msg| msg.role == "system");
 
-        // Add system prompt if it doesn't exist in history
+        // Always ensure we have a system message with current working directory info
         if !has_system_message {
-            // Add system prompt if available
-            if let Some(system_prompt) = &self.system_prompt {
-                executor.add_system_message(system_prompt.clone());
+            // Create system prompt with working directory information
+            let working_dir_ref = self.working_directory.as_deref();
+            let prompt = if let Some(system_prompt) = &self.system_prompt {
+                // If custom system prompt is provided, use it
+                system_prompt.clone()
             } else {
-                // Use default system prompt
-                executor.add_system_message(DEFAULT_AGENT_PROMPT.to_string());
+                // Otherwise use default prompt
+                crate::prompts::get_agent_prompt_with_cwd(working_dir_ref)
+            };
+
+            // Add system message
+            executor.add_system_message(prompt);
+        } else {
+            // System message exists - ensure it has working directory information
+            if let Some(working_dir) = &self.working_directory {
+                // Find and update existing system message with CWD info
+                if let Some(existing_system_msg) = self
+                    .conversation_history
+                    .iter()
+                    .find(|msg| msg.role == "system")
+                {
+                    // Check if the existing system message already contains CWD info
+                    if !existing_system_msg.content.contains("## WORKING DIRECTORY") {
+                        // Create updated system message with CWD
+                        let updated_content = add_working_directory_to_prompt(
+                            &existing_system_msg.content,
+                            working_dir,
+                        );
+                        // Replace the existing system message
+                        executor.add_system_message(updated_content);
+                    }
+                }
             }
         }
 
@@ -209,13 +247,25 @@ impl Agent {
             // Always ensure we have a system message
             if !has_system_in_updated {
                 // Get system message from original history or from system_prompt
-                let system_content = mutable_self
+                let mut system_content = mutable_self
                     .conversation_history
                     .iter()
                     .find(|msg| msg.role == "system")
                     .map(|msg| msg.content.clone())
                     .or_else(|| mutable_self.system_prompt.clone())
-                    .unwrap_or_else(|| DEFAULT_AGENT_PROMPT.to_string());
+                    .unwrap_or_else(|| {
+                        // Use default system prompt
+                        crate::prompts::DEFAULT_AGENT_PROMPT.to_string()
+                    });
+
+                // Always ensure working directory is in the system prompt
+                if let Some(working_dir) = &mutable_self.working_directory {
+                    if !system_content.contains("## WORKING DIRECTORY") {
+                        // Add the working directory section if it doesn't exist
+                        system_content =
+                            add_working_directory_to_prompt(&system_content, working_dir);
+                    }
+                }
 
                 // Insert system message at the beginning
                 updated_history.insert(0, Message::system(system_content));

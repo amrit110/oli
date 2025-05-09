@@ -92,6 +92,17 @@ pub struct OpenAIClient {
     api_base: String,
 }
 
+// Helper methods
+impl OpenAIClient {
+    /// Returns the model name being used by this client
+    ///
+    /// Primarily used for testing purposes.
+    #[cfg(test)]
+    pub(crate) fn get_model_name(&self) -> &str {
+        &self.model
+    }
+}
+
 impl OpenAIClient {
     pub fn new(model: Option<String>) -> Result<Self> {
         // Try to get API key from environment
@@ -122,6 +133,10 @@ impl OpenAIClient {
         })
     }
 
+    /// Converts internal message format to OpenAI's message format
+    ///
+    /// This method converts each message to OpenAI's format with appropriate
+    /// role and content fields.
     fn convert_messages(&self, messages: Vec<Message>) -> Vec<OpenAIMessage> {
         messages
             .into_iter()
@@ -137,6 +152,10 @@ impl OpenAIClient {
             .collect()
     }
 
+    /// Converts internal tool definitions to OpenAI's format
+    ///
+    /// This method converts tool definitions to OpenAI's function format with
+    /// appropriate name, description, and parameters.
     fn convert_tool_definitions(&self, tools: Vec<ToolDefinition>) -> Vec<OpenAITool> {
         tools
             .into_iter()
@@ -472,5 +491,296 @@ impl ApiClient for OpenAIClient {
         }
 
         Ok((String::new(), None))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apis::api_client::{Message, ToolDefinition};
+    use serde_json::json;
+
+    #[test]
+    fn test_openai_model_name() {
+        // Test that the default model name is correct when providing None
+        // This doesn't make API calls, just tests the client setup logic
+        let api_key = "test_api_key".to_string();
+        let client = OpenAIClient::with_api_key(api_key, None).unwrap();
+
+        // Verify the model name is the expected default
+        assert_eq!(
+            client.get_model_name(),
+            "gpt-4o",
+            "Default model name should be gpt-4o"
+        );
+    }
+
+    #[test]
+    fn test_openai_with_custom_model() {
+        // Test that the custom model name is used correctly
+        let api_key = "test_api_key".to_string();
+        let model_name = "gpt-4-turbo".to_string();
+        let client = OpenAIClient::with_api_key(api_key, Some(model_name.clone())).unwrap();
+
+        // Verify the custom model name is used
+        assert_eq!(
+            client.get_model_name(),
+            model_name,
+            "Custom model name should be used"
+        );
+    }
+
+    #[test]
+    fn test_message_conversion() {
+        // Set up a client for testing conversion methods
+        let api_key = "test_api_key".to_string();
+        let client = OpenAIClient::with_api_key(api_key, None).unwrap();
+
+        // Create test messages
+        let messages = vec![
+            Message {
+                role: "system".to_string(),
+                content: "You are a helpful assistant.".to_string(),
+            },
+            Message {
+                role: "user".to_string(),
+                content: "Hello".to_string(),
+            },
+            Message {
+                role: "assistant".to_string(),
+                content: "Hi there! How can I help you today?".to_string(),
+            },
+        ];
+
+        // Convert the messages
+        let openai_messages = client.convert_messages(messages);
+
+        // Verify messages are converted correctly
+        assert_eq!(openai_messages.len(), 3, "Should have 3 messages");
+
+        // Check system message
+        let system_msg = &openai_messages[0];
+        assert_eq!(
+            system_msg.role, "system",
+            "First message should be a system message"
+        );
+        assert_eq!(
+            system_msg.content.as_ref().unwrap(),
+            "You are a helpful assistant.",
+            "Content should match"
+        );
+        assert!(
+            system_msg.tool_calls.is_none(),
+            "System message should not have tool calls"
+        );
+
+        // Check user message
+        let user_msg = &openai_messages[1];
+        assert_eq!(
+            user_msg.role, "user",
+            "Second message should be a user message"
+        );
+        assert_eq!(
+            user_msg.content.as_ref().unwrap(),
+            "Hello",
+            "Content should match"
+        );
+        assert!(
+            user_msg.tool_calls.is_none(),
+            "User message should not have tool calls"
+        );
+
+        // Check assistant message
+        let assistant_msg = &openai_messages[2];
+        assert_eq!(
+            assistant_msg.role, "assistant",
+            "Third message should be an assistant message"
+        );
+        assert_eq!(
+            assistant_msg.content.as_ref().unwrap(),
+            "Hi there! How can I help you today?",
+            "Content should match"
+        );
+        assert!(
+            assistant_msg.tool_calls.is_none(),
+            "Assistant message should not have tool calls"
+        );
+    }
+
+    #[test]
+    fn test_message_conversion_edge_cases() {
+        // Set up a client for testing conversion methods
+        let api_key = "test_api_key".to_string();
+        let client = OpenAIClient::with_api_key(api_key, None).unwrap();
+
+        // Test with empty messages
+        let empty_messages: Vec<Message> = vec![];
+        let openai_messages = client.convert_messages(empty_messages);
+        assert!(openai_messages.is_empty(), "Should produce no messages");
+
+        // Test with a single message
+        let single_message = vec![Message {
+            role: "user".to_string(),
+            content: "Hello".to_string(),
+        }];
+
+        let openai_messages = client.convert_messages(single_message);
+        assert_eq!(openai_messages.len(), 1, "Should produce 1 message");
+        assert_eq!(openai_messages[0].role, "user", "Should be a user message");
+        assert_eq!(
+            openai_messages[0].content.as_ref().unwrap(),
+            "Hello",
+            "Content should match"
+        );
+    }
+
+    #[test]
+    fn test_tool_definitions_conversion() {
+        // Set up a client for testing conversion methods
+        let api_key = "test_api_key".to_string();
+        let client = OpenAIClient::with_api_key(api_key, None).unwrap();
+
+        // Create test tools
+        let tools = vec![
+            ToolDefinition {
+                name: "calculator".to_string(),
+                description: "Calculate mathematical expressions".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "expression": {
+                            "type": "string",
+                            "description": "The mathematical expression to evaluate"
+                        }
+                    }
+                }),
+            },
+            ToolDefinition {
+                name: "weather".to_string(),
+                description: "Get weather information".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The location to get weather for"
+                        }
+                    }
+                }),
+            },
+        ];
+
+        // Convert the tools
+        let openai_tools = client.convert_tool_definitions(tools);
+
+        // Verify tools are converted correctly
+        assert_eq!(openai_tools.len(), 2, "Should have 2 tools");
+
+        // Check first tool
+        let calculator_tool = &openai_tools[0];
+        assert_eq!(
+            calculator_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(
+            calculator_tool.function.name, "calculator",
+            "Name should match"
+        );
+        assert_eq!(
+            calculator_tool.function.description, "Calculate mathematical expressions",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let calculator_params = &calculator_tool.function.parameters;
+        assert!(
+            calculator_params.is_object(),
+            "Parameters should be an object"
+        );
+        assert!(
+            calculator_params.get("properties").is_some(),
+            "Parameters should have properties"
+        );
+        assert!(
+            calculator_params
+                .get("properties")
+                .unwrap()
+                .get("expression")
+                .is_some(),
+            "Expression property should exist"
+        );
+
+        // Check second tool
+        let weather_tool = &openai_tools[1];
+        assert_eq!(
+            weather_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(weather_tool.function.name, "weather", "Name should match");
+        assert_eq!(
+            weather_tool.function.description, "Get weather information",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let weather_params = &weather_tool.function.parameters;
+        assert!(weather_params.is_object(), "Parameters should be an object");
+        assert!(
+            weather_params.get("properties").is_some(),
+            "Parameters should have properties"
+        );
+        assert!(
+            weather_params
+                .get("properties")
+                .unwrap()
+                .get("location")
+                .is_some(),
+            "Location property should exist"
+        );
+    }
+
+    #[test]
+    fn test_tool_definitions_edge_cases() {
+        // Set up a client for testing conversion methods
+        let api_key = "test_api_key".to_string();
+        let client = OpenAIClient::with_api_key(api_key, None).unwrap();
+
+        // Test with empty tools
+        let empty_tools: Vec<ToolDefinition> = vec![];
+        let openai_tools = client.convert_tool_definitions(empty_tools);
+        assert!(openai_tools.is_empty(), "Should produce no tools");
+
+        // Test with a single tool with minimal properties
+        let single_tool = vec![ToolDefinition {
+            name: "simple".to_string(),
+            description: "Simple tool".to_string(),
+            parameters: json!({
+                "type": "object"
+            }),
+        }];
+
+        let openai_tools = client.convert_tool_definitions(single_tool);
+        assert_eq!(openai_tools.len(), 1, "Should produce 1 tool");
+
+        // Check the simple tool
+        let simple_tool = &openai_tools[0];
+        assert_eq!(
+            simple_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(simple_tool.function.name, "simple", "Name should match");
+        assert_eq!(
+            simple_tool.function.description, "Simple tool",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let simple_params = &simple_tool.function.parameters;
+        assert!(simple_params.is_object(), "Parameters should be an object");
+        assert_eq!(
+            simple_params.get("type").unwrap(),
+            "object",
+            "Type should be object"
+        );
     }
 }

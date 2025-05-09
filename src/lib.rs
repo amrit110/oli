@@ -4,7 +4,7 @@ pub mod app;
 pub mod communication;
 mod errors;
 pub mod models;
-mod prompts;
+pub mod prompts;
 pub mod tools;
 
 // Re-export key backend components

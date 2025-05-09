@@ -175,6 +175,25 @@ pub struct OllamaClient {
     api_base: String,
 }
 
+// Helper methods
+impl OllamaClient {
+    /// Returns the model name being used by this client
+    ///
+    /// Primarily used for testing purposes.
+    #[cfg(test)]
+    pub(crate) fn get_model_name(&self) -> &str {
+        &self.model
+    }
+
+    /// Returns the API base URL used by this client
+    ///
+    /// Primarily used for testing purposes.
+    #[cfg(test)]
+    pub(crate) fn get_api_base(&self) -> &str {
+        &self.api_base
+    }
+}
+
 impl OllamaClient {
     pub fn new(model: Option<String>) -> Result<Self> {
         // Use the provided model name, with no default
@@ -964,5 +983,314 @@ impl ApiClient for OllamaClient {
         );
 
         Ok((content, None))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apis::api_client::{Message, ToolDefinition};
+    use serde_json::json;
+
+    #[test]
+    fn test_ollama_model_name() {
+        // Test that the model name is set correctly
+        let model_name = "llama3".to_string();
+        let client = OllamaClient::new(Some(model_name.clone())).unwrap();
+
+        // Verify the model name is used
+        assert_eq!(
+            client.get_model_name(),
+            model_name,
+            "Model name should match what was provided"
+        );
+    }
+
+    #[test]
+    fn test_ollama_empty_model_name() {
+        // Test with empty model name
+        let client = OllamaClient::new(None).unwrap();
+
+        // Verify the model name is empty as expected
+        assert_eq!(
+            client.get_model_name(),
+            "",
+            "Model name should be empty when None is provided"
+        );
+    }
+
+    #[test]
+    fn test_ollama_custom_api_base() {
+        // Test that the custom API base URL is used correctly
+        let base_url = "http://custom-ollama-server:11434".to_string();
+        let model_name = "mistral".to_string();
+        let client = OllamaClient::with_base_url(model_name.clone(), base_url.clone()).unwrap();
+
+        // Verify both model name and API base are set correctly
+        assert_eq!(
+            client.get_model_name(),
+            model_name,
+            "Model name should match what was provided"
+        );
+        assert_eq!(
+            client.get_api_base(),
+            base_url,
+            "API base URL should match what was provided"
+        );
+    }
+
+    #[test]
+    fn test_ollama_api_base_normalization() {
+        // Test that API base URLs without protocol get normalized
+        let base_url = "localhost:11434".to_string();
+        let model_name = "phi3".to_string();
+        let client = OllamaClient::with_base_url(model_name, base_url).unwrap();
+
+        // Verify API base URL gets normalized with http:// prefix
+        assert_eq!(
+            client.get_api_base(),
+            "http://localhost:11434",
+            "API base URL should be normalized with http:// prefix"
+        );
+    }
+
+    #[test]
+    fn test_convert_messages() {
+        // Set up a client for testing conversion methods
+        let client = OllamaClient::new(Some("llama3".to_string())).unwrap();
+
+        // Create test messages
+        let messages = vec![
+            Message {
+                role: "system".to_string(),
+                content: "You are a helpful assistant.".to_string(),
+            },
+            Message {
+                role: "user".to_string(),
+                content: "Hello".to_string(),
+            },
+            Message {
+                role: "assistant".to_string(),
+                content: "Hi there! How can I help you today?".to_string(),
+            },
+        ];
+
+        // Convert the messages
+        let ollama_messages = client.convert_messages(messages);
+
+        // Verify messages are converted correctly
+        assert_eq!(ollama_messages.len(), 3, "Should have 3 messages");
+
+        // Check system message
+        let system_msg = &ollama_messages[0];
+        assert_eq!(
+            system_msg.role, "system",
+            "First message should be a system message"
+        );
+        assert_eq!(
+            system_msg.content, "You are a helpful assistant.",
+            "Content should match"
+        );
+        assert!(
+            system_msg.tool_calls.is_none(),
+            "System message should not have tool calls"
+        );
+
+        // Check user message
+        let user_msg = &ollama_messages[1];
+        assert_eq!(
+            user_msg.role, "user",
+            "Second message should be a user message"
+        );
+        assert_eq!(user_msg.content, "Hello", "Content should match");
+        assert!(
+            user_msg.tool_calls.is_none(),
+            "User message should not have tool calls"
+        );
+
+        // Check assistant message
+        let assistant_msg = &ollama_messages[2];
+        assert_eq!(
+            assistant_msg.role, "assistant",
+            "Third message should be an assistant message"
+        );
+        assert_eq!(
+            assistant_msg.content, "Hi there! How can I help you today?",
+            "Content should match"
+        );
+        assert!(
+            assistant_msg.tool_calls.is_none(),
+            "Assistant message should not have tool calls"
+        );
+    }
+
+    #[test]
+    fn test_message_conversion_edge_cases() {
+        // Set up a client for testing conversion methods
+        let client = OllamaClient::new(Some("llama3".to_string())).unwrap();
+
+        // Test with empty messages
+        let empty_messages: Vec<Message> = vec![];
+        let ollama_messages = client.convert_messages(empty_messages);
+        assert!(ollama_messages.is_empty(), "Should produce no messages");
+
+        // Test with a single message
+        let single_message = vec![Message {
+            role: "user".to_string(),
+            content: "Hello".to_string(),
+        }];
+
+        let ollama_messages = client.convert_messages(single_message);
+        assert_eq!(ollama_messages.len(), 1, "Should produce 1 message");
+        assert_eq!(ollama_messages[0].role, "user", "Should be a user message");
+        assert_eq!(ollama_messages[0].content, "Hello", "Content should match");
+    }
+
+    #[test]
+    fn test_tool_definitions_conversion() {
+        // Set up a client for testing conversion methods
+        let client = OllamaClient::new(Some("llama3".to_string())).unwrap();
+
+        // Create test tools
+        let tools = vec![
+            ToolDefinition {
+                name: "calculator".to_string(),
+                description: "Calculate mathematical expressions".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "expression": {
+                            "type": "string",
+                            "description": "The mathematical expression to evaluate"
+                        }
+                    }
+                }),
+            },
+            ToolDefinition {
+                name: "weather".to_string(),
+                description: "Get weather information".to_string(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The location to get weather for"
+                        }
+                    }
+                }),
+            },
+        ];
+
+        // Convert the tools
+        let ollama_tools = client.convert_tool_definitions(tools);
+
+        // Verify tools are converted correctly
+        assert_eq!(ollama_tools.len(), 2, "Should have 2 tools");
+
+        // Check first tool
+        let calculator_tool = &ollama_tools[0];
+        assert_eq!(
+            calculator_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(
+            calculator_tool.function.name, "calculator",
+            "Name should match"
+        );
+        assert_eq!(
+            calculator_tool.function.description, "Calculate mathematical expressions",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let calculator_params = &calculator_tool.function.parameters;
+        assert!(
+            calculator_params.is_object(),
+            "Parameters should be an object"
+        );
+        assert!(
+            calculator_params.get("properties").is_some(),
+            "Parameters should have properties"
+        );
+        assert!(
+            calculator_params
+                .get("properties")
+                .unwrap()
+                .get("expression")
+                .is_some(),
+            "Expression property should exist"
+        );
+
+        // Check second tool
+        let weather_tool = &ollama_tools[1];
+        assert_eq!(
+            weather_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(weather_tool.function.name, "weather", "Name should match");
+        assert_eq!(
+            weather_tool.function.description, "Get weather information",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let weather_params = &weather_tool.function.parameters;
+        assert!(weather_params.is_object(), "Parameters should be an object");
+        assert!(
+            weather_params.get("properties").is_some(),
+            "Parameters should have properties"
+        );
+        assert!(
+            weather_params
+                .get("properties")
+                .unwrap()
+                .get("location")
+                .is_some(),
+            "Location property should exist"
+        );
+    }
+
+    #[test]
+    fn test_tool_definitions_edge_cases() {
+        // Set up a client for testing conversion methods
+        let client = OllamaClient::new(Some("llama3".to_string())).unwrap();
+
+        // Test with empty tools
+        let empty_tools: Vec<ToolDefinition> = vec![];
+        let ollama_tools = client.convert_tool_definitions(empty_tools);
+        assert!(ollama_tools.is_empty(), "Should produce no tools");
+
+        // Test with a single tool with minimal properties
+        let single_tool = vec![ToolDefinition {
+            name: "simple".to_string(),
+            description: "Simple tool".to_string(),
+            parameters: json!({
+                "type": "object"
+            }),
+        }];
+
+        let ollama_tools = client.convert_tool_definitions(single_tool);
+        assert_eq!(ollama_tools.len(), 1, "Should produce 1 tool");
+
+        // Check the simple tool
+        let simple_tool = &ollama_tools[0];
+        assert_eq!(
+            simple_tool.tool_type, "function",
+            "Tool type should be function"
+        );
+        assert_eq!(simple_tool.function.name, "simple", "Name should match");
+        assert_eq!(
+            simple_tool.function.description, "Simple tool",
+            "Description should match"
+        );
+
+        // Check function parameters
+        let simple_params = &simple_tool.function.parameters;
+        assert!(simple_params.is_object(), "Parameters should be an object");
+        assert_eq!(
+            simple_params.get("type").unwrap(),
+            "object",
+            "Type should be object"
+        );
     }
 }

@@ -244,6 +244,110 @@ fn register_conversation_apis(rpc_server: &mut RpcServer, app: &Arc<Mutex<App>>)
             "message": "Conversation history cleared"
         }))
     });
+
+    // Clone app state for get_memory_info handler
+    let app_clone = app.clone();
+
+    // Register get_memory_info method for memory operations
+    rpc_server.register_method("get_memory_info", move |_| {
+        let app = app_clone.lock().unwrap();
+
+        // First try to get the raw content
+        match app.read_memory() {
+            Ok(raw_content) => {
+                // Also get the structured memories
+                match app.get_memories() {
+                    Ok(memories) => {
+                        // Convert memories to a JSON structure
+                        let memory_sections = memories
+                            .iter()
+                            .map(|(section, entries)| {
+                                json!({
+                                    "section": section,
+                                    "entries": entries
+                                })
+                            })
+                            .collect::<Vec<_>>();
+
+                        Ok(json!({
+                            "success": true,
+                            "memory_path": app.memory_path(),
+                            "memory_exists": app.memory_manager.memory_exists(),
+                            "raw_content": raw_content,
+                            "sections": memory_sections
+                        }))
+                    }
+                    Err(_) => {
+                        // Even if parsing fails, return the raw content
+                        Ok(json!({
+                            "success": true,
+                            "memory_path": app.memory_path(),
+                            "memory_exists": app.memory_manager.memory_exists(),
+                            "raw_content": raw_content
+                        }))
+                    }
+                }
+            }
+            Err(err) => Ok(json!({
+                "success": false,
+                "error": format!("Failed to read memory: {}", err),
+                "memory_path": app.memory_path()
+            })),
+        }
+    });
+
+    // Clone app state for add_memory handler
+    let app_clone = app.clone();
+
+    // Register add_memory method for adding new memories
+    rpc_server.register_method("add_memory", move |params| {
+        let app = app_clone.lock().unwrap();
+
+        // Extract section and memory from params
+        let section = params["section"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing 'section' parameter"))?;
+
+        let memory = params["memory"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing 'memory' parameter"))?;
+
+        match app.add_memory(section, memory) {
+            Ok(_) => Ok(json!({
+                "success": true,
+                "message": format!("Added memory to section '{}'", section)
+            })),
+            Err(err) => Ok(json!({
+                "success": false,
+                "error": format!("Failed to add memory: {}", err)
+            })),
+        }
+    });
+
+    // Clone app state for add_memory_file handler
+    let app_clone = app.clone();
+
+    // Register add_memory_file method for replacing the entire memory file
+    rpc_server.register_method("add_memory_file", move |params| {
+        let app = app_clone.lock().unwrap();
+
+        // Extract content parameter
+        let content = params["content"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing 'content' parameter"))?;
+
+        match app.write_memory(content) {
+            Ok(_) => Ok(json!({
+                "success": true,
+                "message": "Memory file created successfully",
+                "path": app.memory_path()
+            })),
+            Err(err) => Ok(json!({
+                "success": false,
+                "error": format!("Failed to create memory file: {}", err)
+            })),
+        }
+    });
 }
 
 /// Register system APIs
