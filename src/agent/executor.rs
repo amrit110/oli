@@ -8,9 +8,9 @@ use serde_json::{self, Value};
 use tokio::sync::mpsc;
 
 pub struct AgentExecutor {
-    api_client: DynApiClient,
-    conversation: Vec<Message>,
-    tool_definitions: Vec<ToolDefinition>,
+    pub api_client: DynApiClient,
+    pub conversation: Vec<Message>,
+    pub tool_definitions: Vec<ToolDefinition>,
     progress_sender: Option<mpsc::Sender<String>>,
     working_directory: Option<String>,
 }

@@ -4,7 +4,7 @@
 /// Format the working directory prompt with the provided directory
 pub fn format_working_directory_prompt(working_dir: &str) -> String {
     // We need to use a string literal for the format! macro
-    format!("## WORKING DIRECTORY\nYour current working directory is: {}\nWhen using file system tools such as Read, Glob, Grep, LS, Edit, and Write, you should use absolute paths. You can use this working directory to construct them when needed.", working_dir)
+    format!("## WORKING DIRECTORY\nYour current working directory is: {}\nWhen using file system tools, you should use absolute paths. You can use this working directory to construct them when needed.", working_dir)
 }
 
 /// Add the working directory section to a system prompt if it doesn't already have it

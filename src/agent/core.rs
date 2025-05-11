@@ -21,7 +21,7 @@ pub enum LLMProvider {
 pub struct Agent {
     provider: LLMProvider,
     model: Option<String>,
-    api_client: Option<DynApiClient>,
+    pub api_client: Option<DynApiClient>,
     system_prompt: Option<String>,
     working_directory: Option<String>,
     progress_sender: Option<mpsc::Sender<String>>,
