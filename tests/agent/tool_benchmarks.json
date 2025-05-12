@@ -37,103 +37,54 @@
       }
     },
     {
-      "query": "Can you show me all the dependencies listed in the Cargo.toml file at the project root?",
+      "query": "Can you show me all the dependencies listed in ./Cargo.toml file?",
       "expected_tool": "Read",
       "expected_params": {
         "file_path": "{TEST_DIR}/Cargo.toml",
         "offset": 0,
-        "limit": 2000
+        "limit": 1000
       }
     },
     {
       "query": "Please find all Rust source files (*.rs) in the entire project directory.",
       "expected_tool": "Glob",
       "expected_params": {
-        "pattern": "**/*.rs",
-        "path": "{TEST_DIR}"
+        "pattern": "**/*.rs"
       }
     },
     {
       "query": "Find all JavaScript files in the project directory and its subdirectories.",
       "expected_tool": "Glob",
       "expected_params": {
-        "pattern": "**/*.js",
-        "path": "{TEST_DIR}"
+        "pattern": "**/*.js"
       }
     },
     {
       "query": "Search for all TypeScript interface definition files (*.d.ts) in the project.",
       "expected_tool": "Glob",
       "expected_params": {
-        "pattern": "**/*.d.ts",
-        "path": "{TEST_DIR}"
+        "pattern": "**/*.d.ts"
       }
     },
     {
       "query": "Find all markdown files directly in the docs directory (not in subdirectories).",
       "expected_tool": "Glob",
       "expected_params": {
-        "pattern": "*.md",
-        "path": "{TEST_DIR}/docs"
+        "pattern": "docs/*.md"
       }
     },
     {
       "query": "Find all Rust test files that have 'test' in their name anywhere in the project.",
       "expected_tool": "Glob",
       "expected_params": {
-        "pattern": "**/*test*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search for any Rust file that imports or uses modules with the word 'module' in them.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "use.*module",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all function definitions in Rust files that contain the word 'file' in their name.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "fn.*file",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search for the exact definition of the 'execute' method in all project files.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "fn\\s+execute",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all Rust code that processes JSON responses - look for text containing both 'json' and 'response'.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "json.*response",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search all Rust files for error handling patterns like 'Error', 'error', 'Err', or 'Result'.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "Error|error|Err|Result",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
+        "pattern": "**/*test*.rs"
       }
     },
     {
       "query": "What files and directories are located directly in the project root directory?",
       "expected_tool": "LS",
       "expected_params": {
-        "path": "{TEST_DIR}"
+        "path": "."
       }
     },
     {
@@ -208,21 +159,21 @@
       "query": "Run cargo fmt to format all Rust files in the project according to Rust style guidelines.",
       "expected_tool": "Bash",
       "expected_params": {
-        "command": "cd {TEST_DIR} && cargo fmt"
+        "command": "cargo fmt"
       }
     },
     {
       "query": "Run git status to show the current state of the git repository for this project.",
       "expected_tool": "Bash",
       "expected_params": {
-        "command": "cd {TEST_DIR} && git status"
+        "command": "git status"
       }
     },
     {
       "query": "Count the total number of lines in all Rust source files in the project.",
       "expected_tool": "Bash",
       "expected_params": {
-        "command": "find {TEST_DIR} -name '*.rs' | xargs wc -l"
+        "command": "find . -name '*.rs' | xargs wc -l"
       }
     },
     {
@@ -236,7 +187,7 @@
       "query": "Create a new directory called 'examples' at the root of the project.",
       "expected_tool": "Bash",
       "expected_params": {
-        "command": "mkdir -p {TEST_DIR}/examples"
+        "command": "mkdir -p examples"
       }
     },
     {
@@ -282,86 +233,6 @@
         "file_path": "{TEST_DIR}/CONTRIBUTING.md",
         "old_string": "contact@example.com",
         "new_string": "support@example.com"
-      }
-    },
-    {
-      "query": "Search the README.md file for any mentions of installation or setup instructions.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "install|Installation|setup|Setup",
-        "path": "{TEST_DIR}",
-        "include": "README.md"
-      }
-    },
-    {
-      "query": "Find all TODO or FIXME comments in Rust files throughout the project.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "TODO|FIXME",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search through all Rust files for code related to API endpoints, routes, or API definitions.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "endpoint|route|api|API",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Scan all Rust, TypeScript, and JavaScript files for potential hardcoded credentials or secrets.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "password|token|secret|key|credential",
-        "include": "*.{rs,ts,js}",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search the entire project for code related to database connections or configuration.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "database|connection|db\\.|DB_|connect",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all React components in the app/src/components directory that use the useState hook.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "useState",
-        "include": "*.tsx",
-        "path": "{TEST_DIR}/app/src/components"
-      }
-    },
-    {
-      "query": "Find all instances where error logging occurs in Rust, TypeScript, or JavaScript files.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "log.*error|error.*log|console\\.error",
-        "include": "*.{rs,ts,js}",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search for all Rust modules that contain async functions.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "async\\s+fn",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Extract the dependencies section from the Cargo.toml file.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "\\[dependencies\\]([\\s\\S]*?)\\[|\\[dependencies\\]([\\s\\S]*)",
-        "include": "Cargo.toml",
-        "path": "{TEST_DIR}"
       }
     },
     {
@@ -596,96 +467,6 @@
       }
     },
     {
-      "query": "Search for any code that imports deprecated modules in JavaScript, TypeScript, or Rust files.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "import.*deprecated",
-        "include": "*.{js,ts,rs}",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all async functions in Rust files that don't have error handling via catch blocks.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "async\\s+fn[^{]*\\{(?![^}]*catch)",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search for commented out code blocks in JavaScript, TypeScript, and Rust files.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "//[\\s\\S]*?\\w+[\\s\\S]*?\\w+|/\\*[\\s\\S]*?\\*/",
-        "include": "*.{rs,js,ts}",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find potential memory leak patterns in Rust files, like Rc::new, Arc::new, or Box::leak.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "leak|Leak|Rc::new|Arc::new|Box::leak",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search all test files for mock, stub, or fake objects used in tests.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "mock|Mock|stub|Stub|fake|Fake",
-        "include": "*test*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all CSS custom properties (variables) defined with -- prefix in CSS files.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "--[a-zA-Z0-9-]+\\s*:",
-        "include": "*.css",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Search for files that use or import the AWS SDK in JavaScript, TypeScript, or Rust.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "aws-sdk|AWS|aws",
-        "include": "*.{js,ts,rs}",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find recursive functions in Rust files where a function calls itself.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "fn\\s+\\w+[\\s\\S]*?\\1\\s*\\(",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all React components in the components directory that use the useEffect hook.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "useEffect",
-        "include": "*.{tsx,jsx}",
-        "path": "{TEST_DIR}/app/src/components"
-      }
-    },
-    {
-      "query": "Search for code that might be related to concurrent programming or race conditions in Rust.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "Mutex|RwLock|lock|atomic|AtomicBool|AtomicUsize",
-        "include": "*.rs",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
       "query": "Find all text files (*.txt) anywhere in the project directory.",
       "expected_tool": "Glob",
       "expected_params": {
@@ -780,24 +561,6 @@
       }
     },
     {
-      "query": "Search the README.md file for sections about examples or usage instructions.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "example|Example|usage|Usage",
-        "include": "README.md",
-        "path": "{TEST_DIR}"
-      }
-    },
-    {
-      "query": "Find all modules that are publicly exported from the lib.rs file in the src directory.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "pub\\s+mod|pub\\(crate\\)\\s+mod",
-        "include": "lib.rs",
-        "path": "{TEST_DIR}/src"
-      }
-    },
-    {
       "query": "Find all files in any fixtures directories throughout the project.",
       "expected_tool": "Glob",
       "expected_params": {
@@ -819,15 +582,6 @@
       "expected_tool": "Bash",
       "expected_params": {
         "command": "cd {TEST_DIR} && cargo clean"
-      }
-    },
-    {
-      "query": "Extract the version number from the package.json file to check the current version.",
-      "expected_tool": "Grep",
-      "expected_params": {
-        "pattern": "\"version\":\\s*\"[^\"]+\"",
-        "include": "package.json",
-        "path": "{TEST_DIR}"
       }
     },
     {

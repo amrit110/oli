@@ -1413,7 +1413,7 @@ pub fn get_tool_definitions() -> Vec<Value> {
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "The number of lines to read (required)"
+                        "description": "The number of lines to read (required), 1000 if not specified"
                     }
                 },
                 "required": ["file_path", "offset", "limit"]
@@ -1421,17 +1421,17 @@ pub fn get_tool_definitions() -> Vec<Value> {
         }),
         serde_json::json!({
             "name": "Glob",
-            "description": "Fast file pattern matching tool using glob patterns like '**/*.rs', supports * (matches characters), ** (recursive directories), {} (alternatives)",
+            "description": "Fast file name pattern matching tool that searches based on file paths and names - NOT file contents. Use this tool when you need to:\n- Find files by name or extension patterns (\"*.rs\", \"**/*.json\")\n- Locate files matching specific naming conventions\n- Search across directories using wildcards (\"src/**/*.ts\")\n- Find files without knowing their exact content\n\nDo NOT use for searching text within files - use Grep instead for content-based searches.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "pattern": {
                         "type": "string",
-                        "description": "The glob pattern to match files against"
+                        "description": "The glob pattern to match files against, e.g. \"**/*.rs\""
                     },
                     "path": {
                         "type": "string",
-                        "description": "The directory to search in (defaults to current directory)"
+                        "description": "The directory to search in. Default to current directory."
                     }
                 },
                 "required": ["pattern"]
@@ -1439,7 +1439,7 @@ pub fn get_tool_definitions() -> Vec<Value> {
         }),
         serde_json::json!({
             "name": "Grep",
-            "description": "Fast content search tool using regular expressions to find patterns in file contents",
+            "description": "Fast content-based search tool that looks for specific text patterns WITHIN files. Use this tool when you need to:\n- Find text, code, or patterns inside file contents\n- Search for functions, classes, or specific implementations\n- Locate where certain variables or methods are used\n- Find specific text strings, error messages, or log patterns\n\nDo NOT use for finding files by name or extension - use Glob instead for file path/name pattern matching.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1453,7 +1453,7 @@ pub fn get_tool_definitions() -> Vec<Value> {
                     },
                     "path": {
                         "type": "string",
-                        "description": "The directory to search in (defaults to current directory)"
+                        "description": "The directory to search in. Default to current directory."
                     }
                 },
                 "required": ["pattern"]
@@ -1467,14 +1467,14 @@ pub fn get_tool_definitions() -> Vec<Value> {
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "The absolute path to the directory to list"
+                        "description": "The absolute path to the directory to list. Default to current directory."
                     },
                     "ignore": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "List of glob patterns to ignore (optional)"
+                        "description": "List of glob patterns to ignore. For example, [\"*.tmp\", \"*.log\"]."
                     }
                 },
                 "required": ["path"]

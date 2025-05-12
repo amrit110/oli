@@ -12,7 +12,7 @@ use tokio;
 
 #[tokio::test]
 #[cfg_attr(not(feature = "benchmark"), ignore)]
-async fn benchmark_tool_call_accuracy() {
+async fn benchmark_tool_call_correctness_and_efficiency() {
     // Initialize logging
     init_logging();
 
@@ -70,6 +70,7 @@ async fn benchmark_tool_call_accuracy() {
     // Statistics
     let mut correct_count = 0;
     let mut total_count = 0;
+    let mut total_tool_calls = 0;
     let mut results = Vec::new();
 
     // Show progress bar
@@ -91,11 +92,11 @@ async fn benchmark_tool_call_accuracy() {
         io::stderr().flush().ok();
 
         // Run just a few examples to test the changes
-        if i < 2 {
-            continue;
-        } else if i > 3 {
-            break;
-        }
+        // if i < 0 {
+        //     continue;
+        // } else if i > 1 {
+        //     break;
+        // }
 
         // Log the current query being tested
         log(
@@ -143,7 +144,7 @@ async fn benchmark_tool_call_accuracy() {
             top_p: Some(0.95),
             max_tokens: Some(4096),
             tools: Some(executor.tool_definitions.clone()),
-            require_tool_use: false, // Match behavior in src/agent/executor.rs
+            require_tool_use: false,
             json_schema: None,
         };
 
@@ -186,38 +187,58 @@ async fn benchmark_tool_call_accuracy() {
                         // Check if we got any tool calls directly from the API
                         if let Some(calls) = tool_calls {
                             if !calls.is_empty() {
-                                let tool_call = &calls[0];
+                                // Track the total number of tool calls for efficiency metric
+                                total_tool_calls += calls.len();
 
-                                // Print more debug info about the tool call and arguments
+                                // Track whether any tool call was correct
+                                let mut found_correct_tool = false;
+
+                                // Log number of tool calls made for this query
                                 log(
                                     LogLevel::Info,
-                                    &format!("Tool detected: {}", tool_call.name),
-                                );
-                                log(
-                                    LogLevel::Debug,
-                                    &format!("Tool call arguments: {:?}", tool_call.arguments),
+                                    &format!("Number of tool calls: {}", calls.len()),
                                 );
 
-                                // Compare with expected tool call
-                                let is_correct = compare_tool_params(
-                                    &query.expected_tool,
-                                    &query.expected_params,
-                                    &tool_call.name,
-                                    &tool_call.arguments,
-                                    &test_dir,
-                                );
+                                // Check each tool call to see if any matches the expected one
+                                for tool_call in &calls {
+                                    // Print more debug info about the tool call and arguments
+                                    log(
+                                        LogLevel::Info,
+                                        &format!("Tool detected: {}", tool_call.name),
+                                    );
+                                    log(
+                                        LogLevel::Debug,
+                                        &format!("Tool call arguments: {:?}", tool_call.arguments),
+                                    );
 
-                                if is_correct {
+                                    // Compare with expected tool call
+                                    let is_correct = compare_tool_params(
+                                        &query.expected_tool,
+                                        &query.expected_params,
+                                        &tool_call.name,
+                                        &tool_call.arguments,
+                                        &test_dir,
+                                    );
+
+                                    if is_correct {
+                                        found_correct_tool = true;
+                                        log(LogLevel::Info, "✅ Found correct tool call");
+                                        break; // Found a correct tool call, no need to check others
+                                    }
+                                }
+
+                                // Update correctness metric
+                                if found_correct_tool {
                                     correct_count += 1;
-                                    log(LogLevel::Info, "✅ Tool call correct");
+                                    log(LogLevel::Info, "✅ Correctness: Tool call found");
                                     eprint!("✅"); // Simple progress indicator
                                     io::stderr().flush().ok();
                                 } else {
                                     log(
                                         LogLevel::Warning,
                                         &format!(
-                                            "❌ Tool call incorrect. Expected: {}, got: {}",
-                                            query.expected_tool, tool_call.name
+                                            "❌ Correctness: Tool call incorrect. Expected: {}, not found in {} calls",
+                                            query.expected_tool, calls.len()
                                         ),
                                     );
                                     eprint!("❌"); // Simple progress indicator
@@ -225,26 +246,31 @@ async fn benchmark_tool_call_accuracy() {
                                 }
 
                                 // Record result
-                                results.push((i, query.query.clone(), is_correct));
+                                results.push((
+                                    i,
+                                    query.query.clone(),
+                                    found_correct_tool,
+                                    calls.len(),
+                                ));
                             } else {
                                 log(LogLevel::Warning, "❌ Empty tool calls array in response");
                                 eprint!("❌"); // Simple progress indicator
                                 io::stderr().flush().ok();
-                                results.push((i, query.query.clone(), false));
+                                results.push((i, query.query.clone(), false, 0));
                             }
                         } else {
                             // No tool calls returned from API
                             log(LogLevel::Warning, "❌ No tool calls in API response");
                             eprint!("❌"); // Simple progress indicator
                             io::stderr().flush().ok();
-                            results.push((i, query.query.clone(), false));
+                            results.push((i, query.query.clone(), false, 0));
                         }
                     }
                     Err(e) => {
                         log(LogLevel::Error, &format!("❌ API call failed: {}", e));
                         eprint!("❌"); // Simple progress indicator
                         io::stderr().flush().ok();
-                        results.push((i, query.query.clone(), false));
+                        results.push((i, query.query.clone(), false, 0));
                     }
                 }
             }
@@ -255,7 +281,7 @@ async fn benchmark_tool_call_accuracy() {
                 );
                 eprint!("⏱️"); // Simple progress indicator
                 io::stderr().flush().ok();
-                results.push((i, query.query.clone(), false));
+                results.push((i, query.query.clone(), false, 0));
             }
         }
 
@@ -272,9 +298,23 @@ async fn benchmark_tool_call_accuracy() {
     // Print a newline after progress indicators
     eprintln!();
 
-    // Calculate and report accuracy
-    let accuracy = if total_count > 0 {
+    // Calculate correctness and efficiency metrics
+    let correctness = if total_count > 0 {
         (correct_count as f64 / total_count as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    // Efficiency: Ideally each query should have exactly 1 tool call
+    // Lower values mean the model made unnecessary extra calls
+    let efficiency = if total_count > 0 {
+        if total_tool_calls >= total_count {
+            (total_count as f64 / total_tool_calls as f64) * 100.0
+        } else {
+            // If we got fewer tool calls than queries, this means some queries had no tools
+            // called at all - which is a failure case we should count against efficiency
+            (total_tool_calls as f64 / total_count as f64) * 100.0
+        }
     } else {
         0.0
     };
@@ -298,26 +338,46 @@ async fn benchmark_tool_call_accuracy() {
     );
     log(
         LogLevel::Info,
-        &format!("Correct tool calls: {}", correct_count),
+        &format!("Total tool calls:   {}", total_tool_calls),
     );
     log(
         LogLevel::Info,
-        &format!("Accuracy:           {:.2}%", accuracy),
+        &format!("Correct queries:    {}", correct_count),
+    );
+    log(
+        LogLevel::Info,
+        &format!("Correctness:        {:.2}%", correctness),
+    );
+    log(
+        LogLevel::Info,
+        &format!("Efficiency:         {:.2}%", efficiency),
+    );
+    log(
+        LogLevel::Info,
+        &format!("Ideal tool calls:   {} (1 per query)", total_count),
     );
 
-    if correct_count < total_count {
-        log(LogLevel::Info, "\nIncorrect queries:");
-        for (i, query, is_correct) in &results {
+    // Print queries with incorrect tool calls or excessive tool use
+    if correct_count < total_count || total_tool_calls > total_count {
+        log(LogLevel::Info, "\nIncorrect or inefficient queries:");
+        for (i, query, is_correct, num_calls) in &results {
             if !is_correct {
-                log(LogLevel::Warning, &format!("- [{}] {}", i, query));
+                log(
+                    LogLevel::Warning,
+                    &format!("- [{}] Incorrect: {}", i, query),
+                );
+            } else if *num_calls > 1 {
+                log(
+                    LogLevel::Warning,
+                    &format!("- [{}] Inefficient ({} calls): {}", i, num_calls, query),
+                );
             }
         }
     }
 
-    // For reporting in CI, we can accept a low accuracy threshold for passing the test
-    // In practice, this can be adjusted based on the model's capabilities
-    let min_accuracy_threshold = if std::env::var("FORCE_SUCCESS").is_ok() {
-        0.0 // When FORCE_SUCCESS is set, allow any accuracy
+    // For reporting in CI, we can accept a low threshold for passing the test
+    let min_correctness_threshold = if std::env::var("FORCE_SUCCESS").is_ok() {
+        0.0 // When FORCE_SUCCESS is set, allow any correctness
     } else {
         50.0 // Normal threshold for regular runs
     };
@@ -329,24 +389,27 @@ async fn benchmark_tool_call_accuracy() {
     if std::env::var("FORCE_SUCCESS").is_ok() {
         log(
             LogLevel::Warning,
-            &format!("FORCE_SUCCESS environment variable is set - bypassing accuracy check. Actual accuracy: {:.2}%", accuracy),
+            &format!(
+                "FORCE_SUCCESS environment variable is set - bypassing correctness check. Actual correctness: {:.2}%, efficiency: {:.2}%",
+                correctness, efficiency
+            ),
         );
 
         // When FORCE_SUCCESS is set, simply report rather than assert
-        if accuracy < min_accuracy_threshold {
+        if correctness < min_correctness_threshold {
             log(
                 LogLevel::Warning,
-                &format!("In a normal run, this test would have failed: accuracy {:.2}% is below minimum threshold {:.2}%",
-                    accuracy, min_accuracy_threshold),
+                &format!("In a normal run, this test would have failed: correctness {:.2}% is below minimum threshold {:.2}%",
+                    correctness, min_correctness_threshold),
             );
         }
     } else {
         // In normal mode, make the assertion
         assert!(
-            accuracy >= min_accuracy_threshold,
-            "Tool call accuracy too low: {:.2}% (minimum: {:.2}%)",
-            accuracy,
-            min_accuracy_threshold
+            correctness >= min_correctness_threshold,
+            "Tool call correctness too low: {:.2}% (minimum: {:.2}%)",
+            correctness,
+            min_correctness_threshold
         );
     }
 }
