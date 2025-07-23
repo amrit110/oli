@@ -203,7 +203,7 @@ pub fn get_initialize_params(root_path: &str) -> InitializeParams {
     InitializeParams {
         process_id: Some(std::process::id()),
         root_path: Some(root_path.to_string()),
-        root_uri: Some(format!("file://{}", root_path)),
+        root_uri: Some(format!("file://{root_path}")),
         initialization_options: None,
         capabilities: ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
@@ -313,7 +313,7 @@ pub fn get_initialize_params(root_path: &str) -> InitializeParams {
         },
         trace: Some(String::from("off")),
         workspace_folders: Some(vec![WorkspaceFolder {
-            uri: format!("file://{}", root_path),
+            uri: format!("file://{root_path}"),
             name: root_path
                 .split('/')
                 .next_back()

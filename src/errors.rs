@@ -31,13 +31,13 @@ pub enum AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::IoError(e) => write!(f, "IO Error: {}", e),
-            AppError::NetworkError(msg) => write!(f, "Network Error: {}", msg),
-            AppError::LLMError(msg) => write!(f, "Model Error: {}", msg),
-            AppError::FileError(msg) => write!(f, "File Error: {}", msg),
-            AppError::ParserError(msg) => write!(f, "Parser Error: {}", msg),
-            AppError::ToolError(msg) => write!(f, "Tool Error: {}", msg),
-            AppError::Other(msg) => write!(f, "{}", msg),
+            AppError::IoError(e) => write!(f, "IO Error: {e}"),
+            AppError::NetworkError(msg) => write!(f, "Network Error: {msg}"),
+            AppError::LLMError(msg) => write!(f, "Model Error: {msg}"),
+            AppError::FileError(msg) => write!(f, "File Error: {msg}"),
+            AppError::ParserError(msg) => write!(f, "Parser Error: {msg}"),
+            AppError::ToolError(msg) => write!(f, "Tool Error: {msg}"),
+            AppError::Other(msg) => write!(f, "{msg}"),
         }
     }
 }

@@ -112,7 +112,7 @@ impl AgentExecutor {
         // Log working directory if available
         self.log_working_directory().await;
         if let Some(cwd) = &self.working_directory {
-            self.add_system_message(format!("## WORKING DIRECTORY\n{}", cwd));
+            self.add_system_message(format!("## WORKING DIRECTORY\n{cwd}"));
         }
 
         // Create standard completion options
@@ -139,7 +139,7 @@ impl AgentExecutor {
     async fn log_working_directory(&self) {
         if let (Some(cwd), Some(sender)) = (&self.working_directory, &self.progress_sender) {
             let _ = sender
-                .send(format!("[debug] Working directory: {}", cwd))
+                .send(format!("[debug] Working directory: {cwd}"))
                 .await;
         }
     }
@@ -249,8 +249,7 @@ impl AgentExecutor {
             if let Some(sender) = &self.progress_sender {
                 let _ = sender
                     .send(format!(
-                        "Reached maximum number of tool call loops ({}). Forcing completion.",
-                        max_loops
+                        "Reached maximum number of tool call loops ({max_loops}). Forcing completion."
                     ))
                     .await;
             }
@@ -262,7 +261,7 @@ impl AgentExecutor {
         // Log current iteration for debugging
         if let Some(sender) = &self.progress_sender {
             let _ = sender
-                .send(format!("Tool iteration {}/{}", loop_count, max_loops))
+                .send(format!("Tool iteration {loop_count}/{max_loops}"))
                 .await;
         }
 
@@ -404,13 +403,13 @@ impl AgentExecutor {
                 Err(e) => {
                     send_error_message(
                         &self.progress_sender,
-                        &format!("Failed to parse tool call: {}", e),
+                        &format!("Failed to parse tool call: {e}"),
                     )
                     .await;
 
                     // Add error result and continue to next tool call
-                    let tool_call_id = call.id.clone().unwrap_or_else(|| format!("tool_{}", i));
-                    let error_message = format!("ERROR PARSING TOOL CALL: {}. Please check the format of your arguments and try again.", e);
+                    let tool_call_id = call.id.clone().unwrap_or_else(|| format!("tool_{i}"));
+                    let error_message = format!("ERROR PARSING TOOL CALL: {e}. Please check the format of your arguments and try again.");
 
                     self.add_tool_result_to_conversation(&tool_call_id, &error_message);
                     results.push(ToolResult {
@@ -426,7 +425,7 @@ impl AgentExecutor {
             let result = execute_tool_with_preview(&tool_call, call, &self.progress_sender).await;
 
             // Create a valid tool result ID
-            let tool_call_id = call.id.clone().unwrap_or_else(|| format!("tool_{}", i));
+            let tool_call_id = call.id.clone().unwrap_or_else(|| format!("tool_{i}"));
 
             // Send tool execution completed message
             if let Some(sender) = &self.progress_sender {
@@ -447,7 +446,7 @@ impl AgentExecutor {
     fn add_tool_result_to_conversation(&mut self, tool_call_id: &str, result: &str) {
         self.conversation.push(Message {
             role: "user".to_string(),
-            content: format!("Tool result for call {}: {}", tool_call_id, result),
+            content: format!("Tool result for call {tool_call_id}: {result}"),
         });
     }
 }
@@ -536,7 +535,7 @@ pub fn process_response(content: &str) -> (String, bool) {
 
 async fn send_error_message(sender: &Option<mpsc::Sender<String>>, message: &str) {
     if let Some(sender) = sender {
-        let _ = sender.send(format!("[error] {}", message)).await;
+        let _ = sender.send(format!("[error] {message}")).await;
     }
 }
 
@@ -601,7 +600,7 @@ async fn execute_tool_with_preview(
 
     match result {
         Ok(output) => output,
-        Err(e) => format!("ERROR EXECUTING TOOL: {}", e),
+        Err(e) => format!("ERROR EXECUTING TOOL: {e}"),
     }
 }
 

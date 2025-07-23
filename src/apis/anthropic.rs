@@ -236,10 +236,7 @@ impl AnthropicClient {
                             "{}",
                             format_log_with_color(
                                 LogLevel::Warning,
-                                &format!(
-                                    "Anthropic API rate limited or overloaded: {}",
-                                    error_body
-                                )
+                                &format!("Anthropic API rate limited or overloaded: {error_body}")
                             )
                         );
 
@@ -263,8 +260,7 @@ impl AnthropicClient {
                     // For network errors, also use retry logic
                     if retries >= max_retries {
                         return Err(AppError::NetworkError(format!(
-                            "Failed to send request to Anthropic after {} retries: {}",
-                            retries, e
+                            "Failed to send request to Anthropic after {retries} retries: {e}"
                         ))
                         .into());
                     }
@@ -296,7 +292,7 @@ impl AnthropicClient {
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert(
             AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", api_key))?,
+            HeaderValue::from_str(&format!("Bearer {api_key}"))?,
         );
         headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
         headers.insert("x-api-key", HeaderValue::from_str(&api_key)?);
@@ -485,15 +481,14 @@ impl ApiClient for AnthropicClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "Anthropic API error: {} - {}",
-                status, error_text
+                "Anthropic API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Get the response as a string first for debugging
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -513,7 +508,7 @@ impl ApiClient for AnthropicClient {
         // Try to parse the response
         let anthropic_response: AnthropicResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse Anthropic response: {}", e);
+                let error_msg = format!("Failed to parse Anthropic response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;
@@ -646,15 +641,14 @@ impl ApiClient for AnthropicClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "Anthropic API error: {} - {}",
-                status, error_text
+                "Anthropic API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Get the response as a string first for debugging
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -674,7 +668,7 @@ impl ApiClient for AnthropicClient {
         // Try to parse the response
         let anthropic_response: AnthropicResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse Anthropic response: {}", e);
+                let error_msg = format!("Failed to parse Anthropic response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;

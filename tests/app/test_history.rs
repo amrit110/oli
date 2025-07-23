@@ -28,7 +28,7 @@ fn test_should_compress() {
 
     // Add enough messages to trigger summarization by count (1000 is the threshold in history.rs)
     for i in 0..1001 {
-        app.messages.push(format!("Message {}", i));
+        app.messages.push(format!("Message {i}"));
     }
 
     // Should now need summarization

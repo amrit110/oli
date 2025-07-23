@@ -83,7 +83,7 @@ This file provides guidance to oli when working with code in this repository.
         let mut content = self.read_memory()?;
 
         // Find the section in the content
-        let section_heading = format!("## {}", section);
+        let section_heading = format!("## {section}");
 
         if let Some(section_pos) = content.find(&section_heading) {
             // Find where to insert the new memory
@@ -110,7 +110,7 @@ This file provides guidance to oli when working with code in this repository.
             self.write_memory(&updated_content)
         } else {
             // Section doesn't exist, add it
-            content.push_str(&format!("\n## {}\n- {}\n", section, memory));
+            content.push_str(&format!("\n## {section}\n- {memory}\n"));
             self.write_memory(&content)
         }
     }

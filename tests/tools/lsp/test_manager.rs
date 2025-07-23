@@ -49,10 +49,7 @@ TEST_CONSTANT = "Test value"
     // The method might fail for other reasons (like LSP server connection issues),
     // so we just print the error without failing the test
     if let Err(err) = &result {
-        println!(
-            "Got error from document_symbol (but we only care about path handling): {}",
-            err
-        );
+        println!("Got error from document_symbol (but we only care about path handling): {err}");
     }
 
     // The test is considered successful if we got this far without panicking

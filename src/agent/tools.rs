@@ -214,7 +214,7 @@ impl ToolCall {
                     send_tool_notification(
                         "Read",
                         "success",
-                        &format!("Read {} lines from file", line_count),
+                        &format!("Read {line_count} lines from file"),
                         metadata,
                         &tool_id,
                         start_time,
@@ -229,7 +229,7 @@ impl ToolCall {
                     send_tool_notification(
                         "Read",
                         "error",
-                        &format!("Error reading file: {}", e),
+                        &format!("Error reading file: {e}"),
                         metadata,
                         &tool_id,
                         start_time,
@@ -363,7 +363,7 @@ impl ToolCall {
                         send_tool_notification(
                             &tool_name,
                             "error",
-                            &format!("Error searching for pattern: {}", e),
+                            &format!("Error searching for pattern: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -541,7 +541,7 @@ impl ToolCall {
                         send_tool_notification(
                             &tool_name,
                             "error",
-                            &format!("Error searching content: {}", e),
+                            &format!("Error searching content: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -633,7 +633,7 @@ impl ToolCall {
                         send_tool_notification(
                             "LS",
                             "error",
-                            &format!("Error listing directory: {}", e),
+                            &format!("Error listing directory: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -712,7 +712,7 @@ impl ToolCall {
                         send_tool_notification(
                             "Edit",
                             "error",
-                            &format!("Error editing file: {}", e),
+                            &format!("Error editing file: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -786,7 +786,7 @@ impl ToolCall {
                         send_tool_notification(
                             "Write",
                             "error",
-                            &format!("Error writing file: {}", e),
+                            &format!("Error writing file: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -907,7 +907,7 @@ impl ToolCall {
                     }
                     Err(e) => {
                         // Send error notification with command as the name and error details in the message
-                        let error_message = format!("Error: {}", e);
+                        let error_message = format!("Error: {e}");
                         let description = params
                             .description
                             .clone()
@@ -1028,7 +1028,7 @@ impl ToolCall {
 
                                 // Add detail if available
                                 if let Some(ref detail) = symbol.detail {
-                                    output.push_str(&format!("{}  Detail: {}\n", indent, detail));
+                                    output.push_str(&format!("{indent}  Detail: {detail}\n"));
                                 }
 
                                 // Recursively add children
@@ -1051,7 +1051,7 @@ impl ToolCall {
                         send_tool_notification(
                             "DocumentSymbol",
                             "success",
-                            &format!("Found {} symbols", symbol_count),
+                            &format!("Found {symbol_count} symbols"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1070,7 +1070,7 @@ impl ToolCall {
                         send_tool_notification(
                             "DocumentSymbol",
                             "error",
-                            &format!("Error getting document symbols: {}", e),
+                            &format!("Error getting document symbols: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1123,7 +1123,7 @@ impl ToolCall {
 
                         // Add tokens data
                         let token_count = tokens.data.len() / 5;
-                        output.push_str(&format!("Received {} token data points\n", token_count));
+                        output.push_str(&format!("Received {token_count} token data points\n"));
 
                         // LSP semantic tokens are encoded as 5-tuples
                         for chunk in tokens.data.chunks(5) {
@@ -1145,7 +1145,7 @@ impl ToolCall {
                         send_tool_notification(
                             "SemanticTokens",
                             "success",
-                            &format!("Found {} semantic tokens", token_count),
+                            &format!("Found {token_count} semantic tokens"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1164,7 +1164,7 @@ impl ToolCall {
                         send_tool_notification(
                             "SemanticTokens",
                             "error",
-                            &format!("Error getting semantic tokens: {}", e),
+                            &format!("Error getting semantic tokens: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1244,7 +1244,7 @@ impl ToolCall {
                         send_tool_notification(
                             "CodeLens",
                             "success",
-                            &format!("Found {} code lenses", lens_count),
+                            &format!("Found {lens_count} code lenses"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1263,7 +1263,7 @@ impl ToolCall {
                         send_tool_notification(
                             "CodeLens",
                             "error",
-                            &format!("Error getting code lenses: {}", e),
+                            &format!("Error getting code lenses: {e}"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1357,7 +1357,7 @@ impl ToolCall {
                         send_tool_notification(
                             "Definition",
                             "success",
-                            &format!("Found {} definition locations", location_count),
+                            &format!("Found {location_count} definition locations"),
                             metadata,
                             &tool_id,
                             start_time,
@@ -1380,7 +1380,7 @@ impl ToolCall {
                         send_tool_notification(
                             "Definition",
                             "error",
-                            &format!("Error finding definition: {}", e),
+                            &format!("Error finding definition: {e}"),
                             metadata,
                             &tool_id,
                             start_time,

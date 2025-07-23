@@ -417,8 +417,7 @@ fn test_glob_to_regex_conversion() -> Result<()> {
         let ext = path.extension().unwrap().to_string_lossy();
         assert!(
             ext == "rs" || ext == "js",
-            "Should only match .rs or .js files, got: {}",
-            ext
+            "Should only match .rs or .js files, got: {ext}"
         );
     }
 

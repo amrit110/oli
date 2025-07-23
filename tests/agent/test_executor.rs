@@ -92,8 +92,7 @@ impl ApiClient for MockApiClient {
                 for (i, expected_result) in expected.iter().enumerate() {
                     assert_eq!(
                         expected_result.tool_call_id, provided[i].tool_call_id,
-                        "Tool call ID mismatch at index {}",
-                        i
+                        "Tool call ID mismatch at index {i}"
                     );
                 }
             }
@@ -572,7 +571,7 @@ mod execution_tests {
         // We'll add enough to trigger a periodic completion check (at iteration 5)
         for i in 0..6 {
             mock.add_response(
-                &format!("Checking directory iteration {}", i),
+                &format!("Checking directory iteration {i}"),
                 Some(vec![tool_call.clone()]),
             );
         }

@@ -209,7 +209,7 @@ fn register_task_management_apis(rpc_server: &mut RpcServer, app: &Arc<Mutex<App
 
         if let Some(task_id) = task_id {
             // Cancel specific task
-            app.fail_current_task(&format!("Task canceled by user: {}", task_id));
+            app.fail_current_task(&format!("Task canceled by user: {task_id}"));
             Ok(json!({ "success": true, "message": "Task canceled" }))
         } else {
             // Cancel current task if any

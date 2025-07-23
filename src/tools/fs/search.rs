@@ -158,7 +158,7 @@ impl SearchTools {
     pub fn glob_search(pattern: &str) -> Result<Vec<PathBuf>> {
         // First, get the raw entries from glob
         let raw_entries =
-            glob(pattern).with_context(|| format!("Invalid glob pattern: {}", pattern))?;
+            glob(pattern).with_context(|| format!("Invalid glob pattern: {pattern}"))?;
 
         // Collect paths that match the glob pattern
         let mut glob_matches = Vec::new();
@@ -239,7 +239,7 @@ impl SearchTools {
 
     pub fn glob_search_in_dir(dir: &Path, pattern: &str) -> Result<Vec<PathBuf>> {
         let dir_str = dir.to_string_lossy();
-        let full_pattern = format!("{}/{}", dir_str, pattern);
+        let full_pattern = format!("{dir_str}/{pattern}");
         Self::glob_search(&full_pattern)
     }
 
@@ -333,7 +333,7 @@ impl SearchTools {
         search_dir: Option<&Path>,
     ) -> Result<Vec<(PathBuf, usize, String)>> {
         let regex =
-            Regex::new(pattern).with_context(|| format!("Invalid regex pattern: {}", pattern))?;
+            Regex::new(pattern).with_context(|| format!("Invalid regex pattern: {pattern}"))?;
 
         let dir = search_dir.unwrap_or_else(|| Path::new("."));
         let include_regex = Self::create_file_pattern_filter(include_pattern);
@@ -448,5 +448,5 @@ fn glob_to_regex(glob_pattern: &str) -> String {
         }
     }
 
-    format!("^{}$", regex_pattern)
+    format!("^{regex_pattern}$")
 }

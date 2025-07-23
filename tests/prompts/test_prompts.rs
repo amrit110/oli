@@ -23,7 +23,7 @@ fn test_get_agent_prompt_with_cwd() {
 
     // Ensure the working directory section is added
     assert!(prompt.contains("## WORKING DIRECTORY"));
-    assert!(prompt.contains(&format!("Your current working directory is: {}", test_cwd)));
+    assert!(prompt.contains(&format!("Your current working directory is: {test_cwd}")));
     assert!(prompt.contains("When using file system tools"));
     assert!(prompt.contains("you should use absolute paths"));
 }
@@ -48,14 +48,12 @@ fn test_prompt_with_integrated_cwd() {
 
     // Create the same CWD format that's used in the WORKING_DIRECTORY_PROMPT constant
     let expected_prompt = format!(
-        "{}\n\n## WORKING DIRECTORY\nYour current working directory is: {}\nWhen using file system tools such as Read, Glob, Grep, LS, Edit, and Write, you should use absolute paths. You can use this working directory to construct them when needed.",
-        custom_prompt,
-        test_cwd
+        "{custom_prompt}\n\n## WORKING DIRECTORY\nYour current working directory is: {test_cwd}\nWhen using file system tools such as Read, Glob, Grep, LS, Edit, and Write, you should use absolute paths. You can use this working directory to construct them when needed."
     );
 
     // Verify the format is correct
     assert!(expected_prompt.contains("## WORKING DIRECTORY"));
-    assert!(expected_prompt.contains(&format!("Your current working directory is: {}", test_cwd)));
+    assert!(expected_prompt.contains(&format!("Your current working directory is: {test_cwd}")));
 }
 
 /// Test the add_working_directory_to_prompt function
@@ -70,7 +68,7 @@ fn test_add_working_directory_to_prompt() {
     // Verify results
     assert!(result.contains(base_prompt));
     assert!(result.contains("## WORKING DIRECTORY"));
-    assert!(result.contains(&format!("Your current working directory is: {}", test_cwd)));
+    assert!(result.contains(&format!("Your current working directory is: {test_cwd}")));
 }
 
 /// Test that add_working_directory_to_prompt doesn't duplicate working directory section
@@ -81,8 +79,7 @@ fn test_add_working_directory_no_duplication() {
 
     // Create a prompt that already has a working directory section
     let prompt_with_cwd = format!(
-        "Base prompt\n\n## WORKING DIRECTORY\nYour current working directory is: {}\nWhen using file system tools...",
-        orig_cwd
+        "Base prompt\n\n## WORKING DIRECTORY\nYour current working directory is: {orig_cwd}\nWhen using file system tools..."
     );
 
     // Add working directory to a prompt that already has one
@@ -104,6 +101,6 @@ fn test_format_working_directory_prompt() {
     let formatted = format_working_directory_prompt(test_cwd);
 
     assert!(formatted.starts_with("## WORKING DIRECTORY"));
-    assert!(formatted.contains(&format!("Your current working directory is: {}", test_cwd)));
+    assert!(formatted.contains(&format!("Your current working directory is: {test_cwd}")));
     assert!(formatted.contains("you should use absolute paths"));
 }

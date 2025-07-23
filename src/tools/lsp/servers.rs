@@ -153,7 +153,7 @@ impl LspServer {
         let request_json = serde_json::to_string(&request)?;
         let content_length = request_json.len();
 
-        let message = format!("Content-Length: {}\r\n\r\n{}", content_length, request_json);
+        let message = format!("Content-Length: {content_length}\r\n\r\n{request_json}");
 
         if let Some(stdin) = self.process.stdin.as_mut() {
             stdin.write_all(message.as_bytes())?;
@@ -192,13 +192,13 @@ impl LspServer {
 
             // Log the response for debugging
             let content_str = String::from_utf8_lossy(&content);
-            eprintln!("LSP response: {}", content_str);
+            eprintln!("LSP response: {content_str}");
 
             // Parse the response
             match serde_json::from_slice::<ResponseMessage>(&content) {
                 Ok(response) => return Ok(Some(response)),
                 Err(e) => {
-                    eprintln!("Error parsing LSP response: {}", e);
+                    eprintln!("Error parsing LSP response: {e}");
                     // Try to manually extract the result to handle non-standard responses
                     if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&content) {
                         if let Some(result) = json.get("result") {
@@ -234,10 +234,7 @@ impl LspServer {
         let notification_json = serde_json::to_string(&notification)?;
         let content_length = notification_json.len();
 
-        let message = format!(
-            "Content-Length: {}\r\n\r\n{}",
-            content_length, notification_json
-        );
+        let message = format!("Content-Length: {content_length}\r\n\r\n{notification_json}");
 
         if let Some(stdin) = self.process.stdin.as_mut() {
             stdin.write_all(message.as_bytes())?;
@@ -278,7 +275,7 @@ impl LspServer {
         }
 
         // Log what we're about to do
-        eprintln!("Sending documentSymbol request for URI: {}", uri);
+        eprintln!("Sending documentSymbol request for URI: {uri}");
 
         // Add a delay to ensure the server is ready (pyright needs this sometimes)
         std::thread::sleep(std::time::Duration::from_millis(1000));

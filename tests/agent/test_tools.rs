@@ -38,7 +38,7 @@ async fn setup_ollama_agent() -> Option<(Agent, u64)> {
     // Initialize agent with Ollama
     let mut agent = Agent::new(LLMProvider::Ollama).with_model(model);
     if let Err(e) = agent.initialize().await {
-        println!("Failed to initialize agent: {}", e);
+        println!("Failed to initialize agent: {e}");
         return None;
     }
 
@@ -68,11 +68,7 @@ async fn test_read_file_tool_direct() {
     .execute();
 
     // Validate the direct tool call works
-    assert!(
-        read_result.is_ok(),
-        "Failed to read file: {:?}",
-        read_result
-    );
+    assert!(read_result.is_ok(), "Failed to read file: {read_result:?}");
     let read_output = read_result.unwrap();
 
     // Check that all the lines are present in the output
@@ -126,12 +122,11 @@ async fn test_read_file_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Read tool test failed - response doesn't reference line 2 content: {}",
-                response
+                "Read tool test failed - response doesn't reference line 2 content: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -169,14 +164,13 @@ async fn test_glob_tool_direct() {
     .execute();
 
     // Validate the direct tool call works
-    assert!(glob_result.is_ok(), "Failed to glob: {:?}", glob_result);
+    assert!(glob_result.is_ok(), "Failed to glob: {glob_result:?}");
     let glob_output = glob_result.unwrap();
     assert!(
         glob_output.contains("main.rs")
             && glob_output.contains("lib.rs")
             && glob_output.contains("utils.rs"),
-        "Direct glob should find Rust files: {}",
-        glob_output
+        "Direct glob should find Rust files: {glob_output}"
     );
 
     // Test the Glob tool directly for JS files
@@ -189,14 +183,12 @@ async fn test_glob_tool_direct() {
     // Validate the JS glob works
     assert!(
         glob_js_result.is_ok(),
-        "Failed to glob JS files: {:?}",
-        glob_js_result
+        "Failed to glob JS files: {glob_js_result:?}"
     );
     let js_output = glob_js_result.unwrap();
     assert!(
         js_output.contains("app.js") && js_output.contains("utils.js"),
-        "Direct glob should find JS files: {}",
-        js_output
+        "Direct glob should find JS files: {js_output}"
     );
 }
 
@@ -248,7 +240,7 @@ async fn test_glob_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for glob test: {}", response);
+            println!("LLM response for glob test: {response}");
 
             // Success criteria:
             // 1. It mentions any of our Rust files, OR
@@ -265,12 +257,11 @@ async fn test_glob_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Glob tool test failed - response doesn't show proper tool usage: {}",
-                response
+                "Glob tool test failed - response doesn't show proper tool usage: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -312,14 +303,13 @@ async fn test_grep_tool_direct() {
     .execute();
 
     // Validate the direct tool call works
-    assert!(grep_result.is_ok(), "Failed to grep: {:?}", grep_result);
+    assert!(grep_result.is_ok(), "Failed to grep: {grep_result:?}");
     let grep_output = grep_result.unwrap();
     assert!(
         grep_output.contains("file1.txt")
             && grep_output.contains("file3.txt")
             && !grep_output.contains("file2.txt"),
-        "Direct grep should find IMPORTANT in file1.txt and file3.txt, but not file2.txt: {}",
-        grep_output
+        "Direct grep should find IMPORTANT in file1.txt and file3.txt, but not file2.txt: {grep_output}"
     );
 
     // Test the Grep tool with case-insensitive pattern
@@ -333,8 +323,7 @@ async fn test_grep_tool_direct() {
     // Validate case-insensitive search works
     assert!(
         grep_insensitive_result.is_ok(),
-        "Failed to grep case-insensitive: {:?}",
-        grep_insensitive_result
+        "Failed to grep case-insensitive: {grep_insensitive_result:?}"
     );
     let grep_i_output = grep_insensitive_result.unwrap();
     assert!(
@@ -342,8 +331,7 @@ async fn test_grep_tool_direct() {
             && grep_i_output.contains("file2.txt")
             && grep_i_output.contains("file3.txt")
             && grep_i_output.contains("code.rs"),
-        "Case-insensitive grep should find 'important' in all files: {}",
-        grep_i_output
+        "Case-insensitive grep should find 'important' in all files: {grep_i_output}"
     );
 
     // Test with file pattern include
@@ -357,8 +345,7 @@ async fn test_grep_tool_direct() {
     // Validate file pattern filtering works
     assert!(
         grep_txt_result.is_ok(),
-        "Failed to grep with file pattern: {:?}",
-        grep_txt_result
+        "Failed to grep with file pattern: {grep_txt_result:?}"
     );
     let grep_txt_output = grep_txt_result.unwrap();
     assert!(
@@ -366,8 +353,7 @@ async fn test_grep_tool_direct() {
             && grep_txt_output.contains("file2.txt")
             && grep_txt_output.contains("file3.txt")
             && !grep_txt_output.contains("code.rs"),
-        "Pattern-filtered grep should only search txt files: {}",
-        grep_txt_output
+        "Pattern-filtered grep should only search txt files: {grep_txt_output}"
     );
 }
 
@@ -422,7 +408,7 @@ async fn test_grep_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for grep test: {}", response);
+            println!("LLM response for grep test: {response}");
 
             // Success criteria:
             // 1. It correctly identifies one of the matching files, OR
@@ -438,12 +424,11 @@ async fn test_grep_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Grep tool test failed - response doesn't show proper tool usage: {}",
-                response
+                "Grep tool test failed - response doesn't show proper tool usage: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -475,11 +460,7 @@ async fn test_ls_tool_direct() {
     .execute();
 
     // Validate root directory listing
-    assert!(
-        ls_result.is_ok(),
-        "Failed to list directory: {:?}",
-        ls_result
-    );
+    assert!(ls_result.is_ok(), "Failed to list directory: {ls_result:?}");
     let ls_output = ls_result.unwrap();
     assert!(
         ls_output.contains("src")
@@ -487,8 +468,7 @@ async fn test_ls_tool_direct() {
             && ls_output.contains("config")
             && ls_output.contains("README.md")
             && ls_output.contains("LICENSE"),
-        "Root directory listing should show all top-level contents: {}",
-        ls_output
+        "Root directory listing should show all top-level contents: {ls_output}"
     );
 
     // Test subdirectory listing
@@ -501,14 +481,12 @@ async fn test_ls_tool_direct() {
     // Validate subdirectory listing
     assert!(
         ls_src_result.is_ok(),
-        "Failed to list src directory: {:?}",
-        ls_src_result
+        "Failed to list src directory: {ls_src_result:?}"
     );
     let ls_src_output = ls_src_result.unwrap();
     assert!(
         ls_src_output.contains("main.rs"),
-        "Src directory listing should show main.rs: {}",
-        ls_src_output
+        "Src directory listing should show main.rs: {ls_src_output}"
     );
 
     // The ignore parameter in LSParams appears to be for internal use
@@ -569,7 +547,7 @@ async fn test_ls_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for ls test: {}", response);
+            println!("LLM response for ls test: {response}");
 
             // Success criteria:
             // 1. It mentions any of our directories, OR
@@ -586,12 +564,11 @@ async fn test_ls_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "LS tool test failed - response doesn't show proper tool usage: {}",
-                response
+                "LS tool test failed - response doesn't show proper tool usage: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -657,14 +634,13 @@ if __name__ == "__main__":
     // Basic validation of the tool call
     assert!(
         doc_symbol_result.is_ok(),
-        "Failed to get document symbols: {:?}",
-        doc_symbol_result
+        "Failed to get document symbols: {doc_symbol_result:?}"
     );
 
     let doc_symbol_output = doc_symbol_result.unwrap();
 
     // Print out the actual output for debugging
-    println!("\nDOCUMENT SYMBOLS OUTPUT:\n{}", doc_symbol_output);
+    println!("\nDOCUMENT SYMBOLS OUTPUT:\n{doc_symbol_output}");
 
     // Check for expected Python symbols in the output
     assert!(
@@ -672,16 +648,14 @@ if __name__ == "__main__":
             && doc_symbol_output.contains("greet")
             && doc_symbol_output.contains("add")
             && doc_symbol_output.contains("CONSTANT"),
-        "DocumentSymbol should find key symbols in the Python file: {}",
-        doc_symbol_output
+        "DocumentSymbol should find key symbols in the Python file: {doc_symbol_output}"
     );
 
     // Check for symbol types in the output
     assert!(
         doc_symbol_output.contains("Class")
             && (doc_symbol_output.contains("Function") || doc_symbol_output.contains("Method")),
-        "DocumentSymbol should identify symbol types correctly: {}",
-        doc_symbol_output
+        "DocumentSymbol should identify symbol types correctly: {doc_symbol_output}"
     );
 }
 
@@ -707,18 +681,13 @@ async fn test_edit_tool_direct() {
     .execute();
 
     // Validate the direct tool call works
-    assert!(
-        edit_result.is_ok(),
-        "Failed to edit file: {:?}",
-        edit_result
-    );
+    assert!(edit_result.is_ok(), "Failed to edit file: {edit_result:?}");
 
     // Verify the diff output shows both old and new content
     let diff_output = edit_result.unwrap();
     assert!(
         diff_output.contains(old_string) && diff_output.contains(new_string),
-        "Diff output should show both removed and added content: {}",
-        diff_output
+        "Diff output should show both removed and added content: {diff_output}"
     );
 
     // Read the file to verify its content has been edited
@@ -775,8 +744,7 @@ async fn test_edit_tool_direct() {
     // Verify the edit with expected_replacements works
     assert!(
         expected_edit_result.is_ok(),
-        "Should succeed with correct expected_replacements: {:?}",
-        expected_edit_result
+        "Should succeed with correct expected_replacements: {expected_edit_result:?}"
     );
 
     // Read the file to verify that all occurrences were replaced
@@ -890,7 +858,7 @@ if __name__ == "__main__":
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for DocumentSymbol test: {}", response);
+            println!("LLM response for DocumentSymbol test: {response}");
 
             // Success criteria:
             // 1. It mentions any of our Python symbols, OR
@@ -911,12 +879,11 @@ if __name__ == "__main__":
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "DocumentSymbol tool test failed - response doesn't show proper tool usage: {}",
-                response
+                "DocumentSymbol tool test failed - response doesn't show proper tool usage: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -952,7 +919,7 @@ async fn test_edit_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for edit test: {}", response);
+            println!("LLM response for edit test: {response}");
 
             // Read the updated file
             let updated_content =
@@ -979,13 +946,11 @@ async fn test_edit_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Edit tool test failed - response doesn't show proper tool usage or file wasn't correctly edited: {}, file content: {}",
-                response,
-                updated_content
+                "Edit tool test failed - response doesn't show proper tool usage or file wasn't correctly edited: {response}, file content: {updated_content}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -1004,14 +969,12 @@ async fn test_bash_tool_direct() {
     // Validate the direct tool call works
     assert!(
         bash_result.is_ok(),
-        "Failed to execute bash command: {:?}",
-        bash_result
+        "Failed to execute bash command: {bash_result:?}"
     );
     let bash_output = bash_result.unwrap();
     assert!(
         bash_output.contains("Hello, World!"),
-        "Bash output should contain the echo message: {}",
-        bash_output
+        "Bash output should contain the echo message: {bash_output}"
     );
 
     // Test with a command that generates an error to verify error handling
@@ -1051,8 +1014,7 @@ async fn test_write_tool_direct() {
     // Validate the direct tool call works
     assert!(
         write_result.is_ok(),
-        "Failed to write file: {:?}",
-        write_result
+        "Failed to write file: {write_result:?}"
     );
 
     // Verify the diff output contains both old and new content
@@ -1060,8 +1022,7 @@ async fn test_write_tool_direct() {
     assert!(
         diff_output.contains("This is a test file")
             && diff_output.contains("This is the new content"),
-        "Diff output should show both removed and added content: {}",
-        diff_output
+        "Diff output should show both removed and added content: {diff_output}"
     );
 
     // Read the file to verify its content has been written
@@ -1084,8 +1045,7 @@ async fn test_write_tool_direct() {
     // Validate new file creation works
     assert!(
         create_result.is_ok(),
-        "Failed to create new file: {:?}",
-        create_result
+        "Failed to create new file: {create_result:?}"
     );
 
     // Verify the new file exists with correct content
@@ -1117,7 +1077,7 @@ async fn test_bash_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for bash test: {}", response);
+            println!("LLM response for bash test: {response}");
 
             // Success criteria:
             // 1. It uses the bash command, OR
@@ -1133,12 +1093,11 @@ async fn test_bash_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Bash tool test failed - response doesn't show proper tool usage: {}",
-                response
+                "Bash tool test failed - response doesn't show proper tool usage: {response}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }
@@ -1178,7 +1137,7 @@ async fn test_write_tool_with_llm() {
             let response = inner_result.expect("Agent execution failed");
 
             // Print the response for debugging
-            println!("LLM response for write test: {}", response);
+            println!("LLM response for write test: {response}");
 
             // Read the updated file
             let updated_content =
@@ -1202,13 +1161,11 @@ async fn test_write_tool_with_llm() {
             // Show proper failure in benchmark results if success criteria aren't met
             assert!(
                 success,
-                "Write tool test failed - both file update and LLM response must meet success criteria: {}, file content: {}",
-                response,
-                updated_content
+                "Write tool test failed - both file update and LLM response must meet success criteria: {response}, file content: {updated_content}"
             );
         }
         Err(_) => {
-            println!("Test timed out after {} seconds", timeout_secs);
+            println!("Test timed out after {timeout_secs} seconds");
             // We consider timeout a soft success for benchmark continuity
         }
     }

@@ -165,7 +165,7 @@ impl ToolExecution {
             status: ToolExecutionStatus::Running,
             start_time: now,
             end_time: None,
-            message: format!("Starting {}", name),
+            message: format!("Starting {name}"),
             metadata: HashMap::new(),
         }
     }
@@ -191,7 +191,7 @@ impl ToolExecution {
 
         self.status = ToolExecutionStatus::Error;
         self.end_time = Some(now);
-        self.message = format!("Error: {}", error);
+        self.message = format!("Error: {error}");
     }
 
     /// Update tool execution with a progress message
@@ -258,7 +258,7 @@ impl App {
         // Create the memory file if it doesn't exist
         if !memory_manager.memory_exists() {
             if let Err(e) = memory_manager.write_memory(&MemoryManager::default_memory_template()) {
-                eprintln!("Failed to create memory file: {}", e);
+                eprintln!("Failed to create memory file: {e}");
             }
         }
 
@@ -550,7 +550,7 @@ impl App {
                     let tool_message = parts[1].trim();
 
                     // Log tool detection for debugging
-                    eprintln!("Detected tool message: [{}] {}", tool_name, tool_message);
+                    eprintln!("Detected tool message: [{tool_name}] {tool_message}");
 
                     // Determine tool execution status - default to running
                     let status = if message.contains("[error]") || message.contains("ERROR") {
@@ -639,7 +639,7 @@ impl App {
         // Log to stderr for debugging
         eprintln!(
             "{}",
-            format_log_with_color(LogLevel::Debug, &format!("Agent: {}", message))
+            format_log_with_color(LogLevel::Debug, &format!("Agent: {message}"))
         );
     }
 
@@ -706,7 +706,7 @@ impl App {
             "View" => {
                 if file_path.is_some() {
                     if let Some(line_count) = lines {
-                        format!("Read {} lines (ctrl+r to expand)", line_count)
+                        format!("Read {line_count} lines (ctrl+r to expand)")
                     } else {
                         "Reading file contents (ctrl+r to expand)".to_string()
                     }
@@ -755,7 +755,7 @@ impl App {
         }
 
         // Add the response to the message history
-        self.messages.push(format!("[assistant] {}", response));
+        self.messages.push(format!("[assistant] {response}"));
 
         // Complete the task with estimated tokens
         let estimated_tokens = Self::estimate_tokens(&response);
@@ -765,10 +765,7 @@ impl App {
             "{}",
             format_log_with_color(
                 LogLevel::Info,
-                &format!(
-                    "Run completed, received approximately {} tokens",
-                    estimated_tokens
-                )
+                &format!("Run completed, received approximately {estimated_tokens} tokens")
             )
         );
 
@@ -783,12 +780,12 @@ impl App {
         // Log processing message
         eprintln!(
             "{}",
-            format_log_with_color(LogLevel::Info, &format!("Processing run: '{}'", prompt))
+            format_log_with_color(LogLevel::Info, &format!("Processing run: '{prompt}'"))
         );
 
         // Update run time and add to message history
         self.last_run_time = Instant::now();
-        self.messages.push(format!("[user] {}", prompt));
+        self.messages.push(format!("[user] {prompt}"));
 
         // Check for runtime
         if self.tokio_runtime.is_none() {
@@ -801,7 +798,7 @@ impl App {
             "{}",
             format_log_with_color(
                 LogLevel::Info,
-                &format!("Using model at index: {}", model_index)
+                &format!("Using model at index: {model_index}")
             )
         );
 
@@ -819,7 +816,7 @@ impl App {
         // Log model info
         eprintln!(
             "{}",
-            format_log_with_color(LogLevel::Info, &format!("Using model: {}", model_name))
+            format_log_with_color(LogLevel::Info, &format!("Using model: {model_name}"))
         );
 
         // Get and validate API key
@@ -832,7 +829,7 @@ impl App {
             "{}",
             format_log_with_color(
                 LogLevel::Info,
-                &format!("Using {} API for model: {}", api_source, model_name)
+                &format!("Using {api_source} API for model: {model_name}")
             )
         );
 
@@ -863,7 +860,7 @@ impl App {
                 "{}",
                 format_log_with_color(
                     LogLevel::Warning,
-                    &format!("Warning: Unrecognized model type: {}", model_name)
+                    &format!("Warning: Unrecognized model type: {model_name}")
                 )
             );
         }
@@ -957,11 +954,11 @@ impl App {
 
             // Send progress update
             let model_display = if model_name_lower.contains("local") {
-                format!("local model {}", model_file_name)
+                format!("local model {model_file_name}")
             } else {
                 model_name.clone()
             };
-            let _ = progress_tx.send(format!("Sending request to {}", model_display));
+            let _ = progress_tx.send(format!("Sending request to {model_display}"));
 
             // Execute the API call and get response
             let client = runtime.block_on(client_future)?;
@@ -1078,10 +1075,7 @@ impl App {
             // Send tool started notification
             if let Some(rpc_server) = crate::communication::rpc::get_global_rpc_server() {
                 // More detailed logging
-                eprintln!(
-                    "Sending tool_status started notification for tool {}: {}",
-                    name, tool_id
-                );
+                eprintln!("Sending tool_status started notification for tool {name}: {tool_id}");
 
                 // Get the tool execution to send
                 let tool_exec = self.tool_executions.get(&tool_id).cloned();
@@ -1096,10 +1090,10 @@ impl App {
                     );
 
                     if let Err(e) = result {
-                        eprintln!("Error sending tool_status notification: {}", e);
+                        eprintln!("Error sending tool_status notification: {e}");
                     }
                 } else {
-                    eprintln!("Tool execution not found for ID: {}", tool_id);
+                    eprintln!("Tool execution not found for ID: {tool_id}");
                 }
             } else {
                 eprintln!("No RPC server available to send tool_status notification");

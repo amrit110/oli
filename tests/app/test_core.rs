@@ -57,8 +57,7 @@ fn test_local_model_no_api_key_required() -> Result<()> {
     let err_msg = result.unwrap_err().to_string();
     assert!(
         !err_msg.contains("No API key available"),
-        "Test failed with API key error: {}",
-        err_msg
+        "Test failed with API key error: {err_msg}"
     );
 
     Ok(())
@@ -95,8 +94,7 @@ fn test_cloud_model_requires_api_key() -> Result<()> {
     let err_msg = result.unwrap_err().to_string();
     assert!(
         err_msg.contains("No API key available"),
-        "Error message should mention missing API key: {}",
-        err_msg
+        "Error message should mention missing API key: {err_msg}"
     );
 
     Ok(())
@@ -117,8 +115,7 @@ fn test_get_api_source() -> Result<()> {
         let source = App::get_api_source(model);
         assert_eq!(
             source, expected,
-            "API source for '{}' should be '{}' but got '{}'",
-            model, expected, source
+            "API source for '{model}' should be '{expected}' but got '{source}'"
         );
     }
 
@@ -138,8 +135,7 @@ fn test_estimate_tokens() -> Result<()> {
         let token_count = App::estimate_tokens(text);
         assert_eq!(
             token_count, expected,
-            "Token count for '{}' should be '{}' but got '{}'",
-            text, expected, token_count
+            "Token count for '{text}' should be '{expected}' but got '{token_count}'"
         );
     }
 
@@ -189,13 +185,11 @@ fn test_extract_tool_metadata() -> Result<()> {
         let (path, lines) = App::extract_tool_metadata(message);
         assert_eq!(
             path, expected_path,
-            "File path extraction failed for '{}'. Expected '{:?}' but got '{:?}'",
-            message, expected_path, path
+            "File path extraction failed for '{message}'. Expected '{expected_path:?}' but got '{path:?}'"
         );
         assert_eq!(
             lines, expected_lines,
-            "Line count extraction failed for '{}'. Expected '{:?}' but got '{:?}'",
-            message, expected_lines, lines
+            "Line count extraction failed for '{message}'. Expected '{expected_lines:?}' but got '{lines:?}'"
         );
     }
 
@@ -236,8 +230,7 @@ fn test_get_tool_description() -> Result<()> {
         let description = App::get_tool_description(tool, &path, lines);
         assert_eq!(
             description, expected,
-            "Description for tool '{}' should be '{}' but got '{}'",
-            tool, expected, description
+            "Description for tool '{tool}' should be '{expected}' but got '{description}'"
         );
     }
 

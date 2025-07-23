@@ -214,8 +214,8 @@ pub mod session_manager_tests {
         // Create a session manager with some messages
         let mut session_manager = SessionManager::new(100);
         for i in 0..5 {
-            session_manager.add_user_message(format!("User message {}", i));
-            session_manager.add_assistant_message(format!("Assistant message {}", i));
+            session_manager.add_user_message(format!("User message {i}"));
+            session_manager.add_assistant_message(format!("Assistant message {i}"));
         }
 
         // Record the original count

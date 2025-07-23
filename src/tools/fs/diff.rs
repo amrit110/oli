@@ -118,17 +118,17 @@ impl DiffTools {
                 match line {
                     DiffLine::Context(text) => {
                         line_number += 1;
-                        writeln!(output, "     {:3}  {}", line_number, text)?;
+                        writeln!(output, "     {line_number:3}  {text}")?;
                     }
                     DiffLine::Added(text) => {
                         line_number += 1;
                         // Use ANSI colors to show additions in light green
-                        writeln!(output, "     \x1b[92m{:3}+ {}\x1b[0m", line_number, text)?;
+                        writeln!(output, "     \x1b[92m{line_number:3}+ {text}\x1b[0m")?;
                     }
                     DiffLine::Removed(text) => {
                         // For removed lines, use a darker red color
                         // Don't increment line number for removed lines
-                        writeln!(output, "     \x1b[91m{:3}- {}\x1b[0m", line_number, text)?;
+                        writeln!(output, "     \x1b[91m{line_number:3}- {text}\x1b[0m")?;
                     }
                 }
             }

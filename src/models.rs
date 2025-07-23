@@ -59,7 +59,7 @@ pub fn get_available_models() -> Vec<ModelConfig> {
             // Create a description based on the model details
             let description = if let Some(details) = &model_info.details {
                 if let Some(desc) = &details.description {
-                    format!("{} - Running locally via Ollama", desc)
+                    format!("{desc} - Running locally via Ollama")
                 } else {
                     format!("{} - Running locally via Ollama", model_info.name)
                 }
@@ -108,7 +108,7 @@ fn get_available_ollama_models() -> Result<Vec<crate::apis::ollama::OllamaModelI
                             Ok(models)
                         }
                         Err(e) => {
-                            eprintln!("Error listing Ollama models: {}", e);
+                            eprintln!("Error listing Ollama models: {e}");
                             Err(anyhow::anyhow!("Failed to list Ollama models: {}", e))
                         }
                     },
@@ -119,7 +119,7 @@ fn get_available_ollama_models() -> Result<Vec<crate::apis::ollama::OllamaModelI
                 }
             }
             Err(e) => {
-                eprintln!("Failed to create Ollama client: {}", e);
+                eprintln!("Failed to create Ollama client: {e}");
                 Err(anyhow::anyhow!("Failed to create Ollama client: {}", e))
             }
         }
@@ -129,7 +129,7 @@ fn get_available_ollama_models() -> Result<Vec<crate::apis::ollama::OllamaModelI
     match result {
         Ok(models) => Ok(models),
         Err(e) => {
-            eprintln!("Returning empty models list due to error: {}", e);
+            eprintln!("Returning empty models list due to error: {e}");
             Ok(Vec::new())
         }
     }

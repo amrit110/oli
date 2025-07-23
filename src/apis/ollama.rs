@@ -205,7 +205,7 @@ impl OllamaClient {
         let api_base = std::env::var("OLLAMA_API_BASE")
             .unwrap_or_else(|_| "http://localhost:11434".to_string());
 
-        eprintln!("Initializing Ollama client at: {}", api_base);
+        eprintln!("Initializing Ollama client at: {api_base}");
 
         Self::with_base_url(model_name, api_base)
     }
@@ -216,7 +216,7 @@ impl OllamaClient {
             .timeout(Duration::from_secs(600)) // 10 minutes timeout for operations
             .build()
             .map_err(|e| {
-                eprintln!("Failed to build reqwest client: {}", e);
+                eprintln!("Failed to build reqwest client: {e}");
                 anyhow::anyhow!("Failed to build HTTP client: {}", e)
             })?;
 
@@ -224,10 +224,10 @@ impl OllamaClient {
         let api_base = if api_base.starts_with("http://") || api_base.starts_with("https://") {
             api_base
         } else {
-            format!("http://{}", api_base)
+            format!("http://{api_base}")
         };
 
-        eprintln!("Using normalized Ollama API base URL: {}", api_base);
+        eprintln!("Using normalized Ollama API base URL: {api_base}");
 
         Ok(Self {
             client,
@@ -272,7 +272,7 @@ impl OllamaClient {
             "{}",
             format_log_with_color(
                 LogLevel::Debug,
-                &format!("Listing Ollama models from: {}", url)
+                &format!("Listing Ollama models from: {url}")
             )
         );
 
@@ -303,11 +303,11 @@ impl OllamaClient {
                     format!("Failed to connect to Ollama server at {}. Make sure 'ollama serve' is running. Error: {}",
                             self.api_base, e)
                 } else if e.is_timeout() {
-                    format!("Request to Ollama timed out: {}", e)
+                    format!("Request to Ollama timed out: {e}")
                 } else if e.is_request() {
-                    format!("Failed to build request to Ollama: {}", e)
+                    format!("Failed to build request to Ollama: {e}")
                 } else {
-                    format!("Failed to send request to Ollama: {}", e)
+                    format!("Failed to send request to Ollama: {e}")
                 };
 
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
@@ -323,7 +323,7 @@ impl OllamaClient {
                 Err(_) => "Failed to get error details".to_string(),
             };
 
-            let error_msg = format!("Ollama API error: {} - {}", status, error_text);
+            let error_msg = format!("Ollama API error: {status} - {error_text}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             return Err(AppError::NetworkError(error_msg).into());
         }
@@ -332,7 +332,7 @@ impl OllamaClient {
         let response_text = match response.text().await {
             Ok(text) => text,
             Err(e) => {
-                let error_msg = format!("Failed to get response text: {}", e);
+                let error_msg = format!("Failed to get response text: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 return Err(AppError::NetworkError(error_msg).into());
             }
@@ -353,10 +353,8 @@ impl OllamaClient {
         match serde_json::from_str::<OllamaListModelsResponse>(&response_text) {
             Ok(models_response) => Ok(models_response.models),
             Err(e) => {
-                let error_msg = format!(
-                    "Failed to parse Ollama response: {}. Response text: {}",
-                    e, response_text
-                );
+                let error_msg =
+                    format!("Failed to parse Ollama response: {e}. Response text: {response_text}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 Err(AppError::LLMError(error_msg).into())
             }
@@ -397,10 +395,7 @@ impl ApiClient for OllamaClient {
             "{}",
             format_log_with_color(
                 LogLevel::Debug,
-                &format!(
-                    "Sending request to Ollama API at {} with model: {}",
-                    url, model_name
-                )
+                &format!("Sending request to Ollama API at {url} with model: {model_name}")
             )
         );
 
@@ -426,13 +421,13 @@ impl ApiClient for OllamaClient {
                     format!("Failed to connect to Ollama server at {}. Make sure 'ollama serve' is running. Error: {}",
                         self.api_base, e)
                 } else if e.is_timeout() {
-                    format!("Request to Ollama timed out: {}", e)
+                    format!("Request to Ollama timed out: {e}")
                 } else if e.is_request() {
-                    format!("Failed to build request to Ollama: {}", e)
+                    format!("Failed to build request to Ollama: {e}")
                 } else if e.is_builder() {
-                    format!("Failed to build HTTP request: {} - This may be due to a configuration issue with reqwest", e)
+                    format!("Failed to build HTTP request: {e} - This may be due to a configuration issue with reqwest")
                 } else {
-                    format!("Failed to send request to Ollama: {}", e)
+                    format!("Failed to send request to Ollama: {e}")
                 };
 
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
@@ -450,7 +445,7 @@ impl ApiClient for OllamaClient {
                 Err(_) => "Unknown error (failed to get error details)".to_string(),
             };
 
-            let error_msg = format!("Ollama API error: {} - {}", status, error_text);
+            let error_msg = format!("Ollama API error: {status} - {error_text}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             return Err(AppError::NetworkError(error_msg).into());
         }
@@ -459,7 +454,7 @@ impl ApiClient for OllamaClient {
         let response_text = match response.text().await {
             Ok(text) => text,
             Err(e) => {
-                let error_msg = format!("Failed to get response text: {}", e);
+                let error_msg = format!("Failed to get response text: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 return Err(AppError::NetworkError(error_msg).into());
             }
@@ -497,7 +492,7 @@ impl ApiClient for OllamaClient {
                     "{}",
                     format_log_with_color(
                         LogLevel::Warning,
-                        &format!("Failed to parse standard Ollama response: {}, attempting alternate parsing", e)
+                        &format!("Failed to parse standard Ollama response: {e}, attempting alternate parsing")
                     )
                 );
 
@@ -512,7 +507,7 @@ impl ApiClient for OllamaClient {
                     "{}",
                     format_log_with_color(
                         LogLevel::Debug,
-                        &format!("Response text preview: {}", preview)
+                        &format!("Response text preview: {preview}")
                     )
                 );
 
@@ -569,16 +564,14 @@ impl ApiClient for OllamaClient {
                             );
 
                             return Err(AppError::Other(format!(
-                                "Failed to parse Ollama response: missing 'message' field. Response: {}",
-                                preview
+                                "Failed to parse Ollama response: missing 'message' field. Response: {preview}"
                             )).into());
                         }
                     }
                     Err(json_err) => {
                         // If we can't parse as JSON at all, return a clear error
                         return Err(AppError::Other(format!(
-                            "Failed to parse Ollama response as JSON: {}. Raw response: {}",
-                            json_err, preview
+                            "Failed to parse Ollama response as JSON: {json_err}. Raw response: {preview}"
                         ))
                         .into());
                     }
@@ -647,10 +640,7 @@ impl ApiClient for OllamaClient {
             "{}",
             format_log_with_color(
                 LogLevel::Debug,
-                &format!(
-                    "Sending tool request to Ollama API at {} with model: {}",
-                    url, model_name
-                )
+                &format!("Sending tool request to Ollama API at {url} with model: {model_name}")
             )
         );
 
@@ -677,13 +667,13 @@ impl ApiClient for OllamaClient {
                     format!("Failed to connect to Ollama server at {}. Make sure 'ollama serve' is running. Error: {}",
                         self.api_base, e)
                 } else if e.is_timeout() {
-                    format!("Request to Ollama timed out: {}", e)
+                    format!("Request to Ollama timed out: {e}")
                 } else if e.is_request() {
-                    format!("Failed to build request to Ollama: {}", e)
+                    format!("Failed to build request to Ollama: {e}")
                 } else if e.is_builder() {
-                    format!("Failed to build HTTP request: {} - This may be due to a configuration issue with reqwest", e)
+                    format!("Failed to build HTTP request: {e} - This may be due to a configuration issue with reqwest")
                 } else {
-                    format!("Failed to send request to Ollama: {}", e)
+                    format!("Failed to send request to Ollama: {e}")
                 };
 
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
@@ -701,7 +691,7 @@ impl ApiClient for OllamaClient {
                 Err(_) => "Unknown error (failed to get error details)".to_string(),
             };
 
-            let error_msg = format!("Ollama API error: {} - {}", status, error_text);
+            let error_msg = format!("Ollama API error: {status} - {error_text}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             return Err(AppError::NetworkError(error_msg).into());
         }
@@ -710,7 +700,7 @@ impl ApiClient for OllamaClient {
         let response_text = match response.text().await {
             Ok(text) => text,
             Err(e) => {
-                let error_msg = format!("Failed to get response text: {}", e);
+                let error_msg = format!("Failed to get response text: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 return Err(AppError::NetworkError(error_msg).into());
             }
@@ -748,7 +738,7 @@ impl ApiClient for OllamaClient {
                     "{}",
                     format_log_with_color(
                         LogLevel::Warning,
-                        &format!("Failed to parse standard Ollama tool response: {}, attempting alternate parsing", e)
+                        &format!("Failed to parse standard Ollama tool response: {e}, attempting alternate parsing")
                     )
                 );
 
@@ -763,7 +753,7 @@ impl ApiClient for OllamaClient {
                     "{}",
                     format_log_with_color(
                         LogLevel::Debug,
-                        &format!("Tool response text preview: {}", preview)
+                        &format!("Tool response text preview: {preview}")
                     )
                 );
 
@@ -820,16 +810,14 @@ impl ApiClient for OllamaClient {
                             );
 
                             return Err(AppError::Other(format!(
-                                "Failed to parse Ollama tool response: missing 'message' field. Response: {}",
-                                preview
+                                "Failed to parse Ollama tool response: missing 'message' field. Response: {preview}"
                             )).into());
                         }
                     }
                     Err(json_err) => {
                         // If we can't parse as JSON at all, return a clear error
                         return Err(AppError::Other(format!(
-                            "Failed to parse Ollama tool response as JSON: {}. Raw response: {}",
-                            json_err, preview
+                            "Failed to parse Ollama tool response as JSON: {json_err}. Raw response: {preview}"
                         ))
                         .into());
                     }
@@ -867,7 +855,7 @@ impl ApiClient for OllamaClient {
                                     "{}",
                                     format_log_with_color(
                                         LogLevel::Warning,
-                                        &format!("Failed to parse tool arguments as JSON: {}. Using empty object instead.", e)
+                                        &format!("Failed to parse tool arguments as JSON: {e}. Using empty object instead.")
                                     )
                                 );
                                 json!({})
@@ -958,7 +946,7 @@ impl ApiClient for OllamaClient {
                         "{}",
                         format_log_with_color(
                             LogLevel::Debug,
-                            &format!("Found simple tool call format with tool: {}", tool_name)
+                            &format!("Found simple tool call format with tool: {tool_name}")
                         )
                     );
 

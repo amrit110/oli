@@ -88,8 +88,7 @@ impl SessionManager {
     pub fn replace_with_summary(&mut self, summary: String) {
         self.messages.clear();
         self.add_message(Message::system(format!(
-            "Previous conversation summary: {}",
-            summary
+            "Previous conversation summary: {summary}"
         )));
     }
 

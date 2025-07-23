@@ -78,7 +78,7 @@ impl LspServerManager {
 
         // Create a proper URI with file:// scheme
         let uri = format!("file://{}", path.to_string_lossy().replace('\\', "/"));
-        eprintln!("Using URI: {}", uri);
+        eprintln!("Using URI: {uri}");
 
         let file_content = fs::read_to_string(&path)?;
         let language_id = match server_type {
@@ -102,7 +102,7 @@ impl LspServerManager {
 
         // We now know from the test logs that pyright returns the SymbolInformation format
         // Let's try to parse that directly first
-        eprintln!("Response: {:?}", result);
+        eprintln!("Response: {result:?}");
 
         if let Some(array) = result.as_array() {
             if !array.is_empty() {
@@ -154,7 +154,7 @@ impl LspServerManager {
                 }
             }
             Err(e) => {
-                eprintln!("Error parsing DocumentSymbolResponse: {}", e);
+                eprintln!("Error parsing DocumentSymbolResponse: {e}");
 
                 // Fallback for when the server returns a null or other unexpected response
                 // Create a synthetic document symbol

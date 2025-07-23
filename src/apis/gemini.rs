@@ -155,7 +155,7 @@ impl GeminiClient {
                             "{}",
                             format_log_with_color(
                                 LogLevel::Warning,
-                                &format!("Gemini API rate limited or overloaded: {}", error_body)
+                                &format!("Gemini API rate limited or overloaded: {error_body}")
                             )
                         );
 
@@ -179,8 +179,7 @@ impl GeminiClient {
                     // For network errors, also use retry logic
                     if retries >= max_retries {
                         return Err(AppError::NetworkError(format!(
-                            "Failed to send request to Gemini after {} retries: {}",
-                            retries, e
+                            "Failed to send request to Gemini after {retries} retries: {e}"
                         ))
                         .into());
                     }
@@ -219,9 +218,7 @@ impl GeminiClient {
 
         // API base URL with model and API key as query parameter, using v1beta endpoint
         let api_base = format!(
-            "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
-            model = model,
-            api_key = api_key
+            "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         );
 
         eprintln!(
@@ -233,7 +230,7 @@ impl GeminiClient {
             "{}",
             format_log_with_color(
                 LogLevel::Info,
-                &format!("Configured Gemini API with model: {}", model)
+                &format!("Configured Gemini API with model: {model}")
             )
         );
 
@@ -484,7 +481,7 @@ impl GeminiClient {
                     "{}",
                     format_log_with_color(
                         LogLevel::Debug,
-                        &format!("Full Gemini response: {}", response_str)
+                        &format!("Full Gemini response: {response_str}")
                     )
                 );
             }
@@ -534,15 +531,14 @@ impl ApiClient for GeminiClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "Gemini API error: {} - {}",
-                status, error_text
+                "Gemini API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Get the response as a string for debugging
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -562,7 +558,7 @@ impl ApiClient for GeminiClient {
         // Parse the response
         let gemini_response: GeminiResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse Gemini response: {}", e);
+                let error_msg = format!("Failed to parse Gemini response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;
@@ -621,15 +617,14 @@ impl ApiClient for GeminiClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "Gemini API error: {} - {}",
-                status, error_text
+                "Gemini API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Get the response as a string for debugging
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -649,7 +644,7 @@ impl ApiClient for GeminiClient {
         // Parse the response
         let gemini_response: GeminiResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse Gemini response: {}", e);
+                let error_msg = format!("Failed to parse Gemini response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;
@@ -710,8 +705,7 @@ mod tests {
         // the api_base contains the default model name
         assert!(
             client.api_base.contains(GEMINI_MODEL_NAME),
-            "Base URL should contain the default model name: {}",
-            GEMINI_MODEL_NAME
+            "Base URL should contain the default model name: {GEMINI_MODEL_NAME}"
         );
     }
 

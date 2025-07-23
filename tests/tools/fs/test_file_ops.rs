@@ -8,7 +8,7 @@ use tempfile::tempdir;
 fn create_test_file(dir: &Path, filename: &str, content: &str) -> std::path::PathBuf {
     let file_path = dir.join(filename);
     let mut file = File::create(&file_path).unwrap();
-    writeln!(file, "{}", content).unwrap();
+    writeln!(file, "{content}").unwrap();
     file_path
 }
 
@@ -19,7 +19,7 @@ fn test_read_file() {
     let file_path = create_test_file(dir.path(), "test.txt", content);
 
     let result = FileOps::read_file(&file_path).unwrap();
-    assert_eq!(result, format!("{}\n", content));
+    assert_eq!(result, format!("{content}\n"));
 }
 
 #[test]

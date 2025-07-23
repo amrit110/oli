@@ -118,7 +118,7 @@ impl OpenAIClient {
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert(
             AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", api_key))?,
+            HeaderValue::from_str(&format!("Bearer {api_key}"))?,
         );
 
         let client = ReqwestClient::builder().default_headers(headers).build()?;
@@ -209,7 +209,7 @@ impl ApiClient for OpenAIClient {
             .send()
             .await
             .map_err(|e| {
-                let error_msg = format!("Failed to send request to OpenAI: {}", e);
+                let error_msg = format!("Failed to send request to OpenAI: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::NetworkError(error_msg)
             })?;
@@ -221,15 +221,14 @@ impl ApiClient for OpenAIClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "OpenAI API error: {} - {}",
-                status, error_text
+                "OpenAI API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Parse response
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -247,7 +246,7 @@ impl ApiClient for OpenAIClient {
 
         let openai_response: OpenAIResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse OpenAI response: {}", e);
+                let error_msg = format!("Failed to parse OpenAI response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;
@@ -371,7 +370,7 @@ impl ApiClient for OpenAIClient {
                     .find(|msg| msg.role == "user")
                 {
                     if let Some(content) = &mut last_user_msg.content {
-                        *content = format!("{} (Please provide the response as JSON)", content);
+                        *content = format!("{content} (Please provide the response as JSON)");
                     }
                 }
             }
@@ -405,7 +404,7 @@ impl ApiClient for OpenAIClient {
             .send()
             .await
             .map_err(|e| {
-                let error_msg = format!("Failed to send request to OpenAI: {}", e);
+                let error_msg = format!("Failed to send request to OpenAI: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::NetworkError(error_msg)
             })?;
@@ -417,15 +416,14 @@ impl ApiClient for OpenAIClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(AppError::NetworkError(format!(
-                "OpenAI API error: {} - {}",
-                status, error_text
+                "OpenAI API error: {status} - {error_text}"
             ))
             .into());
         }
 
         // Parse response
         let response_text = response.text().await.map_err(|e| {
-            let error_msg = format!("Failed to get response text: {}", e);
+            let error_msg = format!("Failed to get response text: {e}");
             eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
             AppError::NetworkError(error_msg)
         })?;
@@ -443,7 +441,7 @@ impl ApiClient for OpenAIClient {
 
         let openai_response: OpenAIResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                let error_msg = format!("Failed to parse OpenAI response: {}", e);
+                let error_msg = format!("Failed to parse OpenAI response: {e}");
                 eprintln!("{}", format_log_with_color(LogLevel::Error, &error_msg));
                 AppError::Other(error_msg)
             })?;

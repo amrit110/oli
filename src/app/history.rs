@@ -106,7 +106,7 @@ impl ContextCompressor for App {
         // Add the summary marker to the message list
         self.messages.insert(
             0,
-            format!("💬 [CONVERSATION SUMMARY]\n{}\n[END SUMMARY]", summary),
+            format!("💬 [CONVERSATION SUMMARY]\n{summary}\n[END SUMMARY]"),
         );
 
         // Update the session manager if it exists
@@ -129,8 +129,7 @@ impl ContextCompressor for App {
 
         // Add a notification
         self.messages.push(format!(
-            "[success] ⏺ Summarized {} messages ({} chars)",
-            to_summarize, messages_chars
+            "[success] ⏺ Summarized {to_summarize} messages ({messages_chars} chars)"
         ));
 
         // No auto-scroll needed in backend-only mode
@@ -263,7 +262,7 @@ impl App {
         let content_to_summarize = content.to_string();
 
         // Define the summarization prompt
-        let prompt = format!("{}{}", CONVERSATION_SUMMARY_PROMPT, content_to_summarize);
+        let prompt = format!("{CONVERSATION_SUMMARY_PROMPT}{content_to_summarize}");
 
         // Execute the summarization
         let result = runtime.block_on(async { agent_clone.execute(&prompt).await })?;
