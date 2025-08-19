@@ -13,21 +13,22 @@ Ollama models. The benchmark evaluates every tool's performance using simple tes
 _This section is automatically updated by CI/CD pipelines._
 
 <!-- BENCHMARK_RESULTS -->
-## Latest Results (as of 2025-05-02 13:27:40 UTC)
+## Latest Results (as of 2025-08-19 14:39:53 UTC)
 
 | Category | Details |
 |----------|---------|
 | Model | `qwen2.5-coder:7b` |
-| Tool Benchmark Time | 141433 ms |
-| Tool Tests | 7/7 tests passed |
+| Tool Benchmark Time | 54071 ms |
+| Tool Tests | 1/8 tests passed |
 
 ### Tool Performance Tests
-- [x] test_read_file_tool_with_llm (54216ms (54.21s))
-- [x] test_glob_tool_with_llm (11454ms (11.45s))
-- [x] test_grep_tool_with_llm (12549ms (12.54s))
-- [x] test_ls_tool_with_llm (11595ms (11.59s))
-- [x] test_edit_tool_with_llm (12854ms (12.85s))
-- [x] test_bash_tool_with_llm (29415ms (29.41s))
-- [x] test_write_tool_with_llm (9305ms (9.30s))
+- [ ] test_read_file_tool_with_llm (50856ms (50.85s))
+- [ ] test_glob_tool_with_llm (493ms (.49s))
+- [ ] test_grep_tool_with_llm (455ms (.45s))
+- [ ] test_ls_tool_with_llm (433ms (.43s))
+- [x] test_document_symbol_tool_with_llm (446ms (.44s))
+- [ ] test_edit_tool_with_llm (450ms (.45s))
+- [ ] test_bash_tool_with_llm (443ms (.44s))
+- [ ] test_write_tool_with_llm (433ms (.43s))
 
 <!-- END_BENCHMARK_RESULTS -->
