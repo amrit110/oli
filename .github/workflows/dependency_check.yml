@@ -41,7 +41,7 @@ jobs:
     name: Check Rust Dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -57,7 +57,7 @@ jobs:
     name: Check TypeScript Dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
