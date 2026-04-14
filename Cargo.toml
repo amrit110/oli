@@ -30,7 +30,7 @@ dotenv = "0.15.0"
 glob = "0.3.2"
 regex = "1.11.1"
 reqwest = { version = "0.12.15", features = ["json", "blocking"] }
-rand = "0.9.1"
+rand = "0.9.3"
 uuid = { version = "1.16.0", features = ["v4"] }
 
 # Fast code search utilities
