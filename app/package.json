@@ -38,7 +38,7 @@
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",
     "react": "^18.3.1",
-    "tsx": "^4.19.3",
+    "tsx": "^4.22.4",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
